@@ -109,3 +109,47 @@ class TestLicenseRoutes:
 
         r = client.post("/api/v1/licenses/verify", json={"key": key})
         assert r.status_code == 400
+
+
+class TestLicenseMiddleware:
+    """License-key middleware: /api/v1/licenses/validate requires X-License-Key."""
+
+    def test_validate_requires_license(self, client: TestClient):
+        r = client.get("/api/v1/licenses/validate")
+        assert r.status_code == 401
+        assert "license" in r.json()["detail"].lower()
+
+    def test_validate_with_valid_license(self, client: TestClient, license_store):
+        from services.license_service import LicenseService
+
+        svc = LicenseService()
+        info = svc.mint(holder="Acme Corp")
+
+        r = client.get(
+            "/api/v1/licenses/validate",
+            headers={"X-License-Key": info.key},
+        )
+        assert r.status_code == 200, r.text
+        assert r.json()["valid"] is True
+        assert r.json()["holder"] == "Acme Corp"
+
+    def test_validate_with_invalid_license(self, client: TestClient):
+        r = client.get(
+            "/api/v1/licenses/validate",
+            headers={"X-License-Key": "VSK-BAD-SIGNATURE-KEY"},
+        )
+        assert r.status_code == 401
+
+    def test_validate_with_revoked_license(self, client: TestClient, license_store):
+        from services.license_service import LicenseService
+
+        svc = LicenseService()
+        info = svc.mint(holder="Revoked Corp")
+        svc.revoke(info.key)
+
+        r = client.get(
+            "/api/v1/licenses/validate",
+            headers={"X-License-Key": info.key},
+        )
+        assert r.status_code == 401
+

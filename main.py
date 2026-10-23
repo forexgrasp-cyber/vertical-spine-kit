@@ -37,6 +37,10 @@ try:
     from api.routes.license_routes import router as license_router
 except ImportError:
     license_router = None
+try:
+    from api.routes.booking_routes import router as booking_router
+except ImportError:
+    booking_router = None
 from services.tenant_resolver import resolve_tenant
 from shared.metrics.analytics_router import build_metrics_router
 from shared.web.seo_surfaces import create_seo_router
@@ -169,6 +173,8 @@ if i18n_router is not None:
     app.include_router(i18n_router)
 if license_router is not None:
     app.include_router(license_router, prefix="/api/v1/licenses", tags=["licenses"])
+if booking_router is not None:
+    app.include_router(booking_router, prefix="/api/v1/bookings", tags=["bookings"])
 
 # Tenant-scoped business metrics: users read THEIR OWN KPIs at
 # /api/v1/metrics - the resolver maps the platform session to the caller's

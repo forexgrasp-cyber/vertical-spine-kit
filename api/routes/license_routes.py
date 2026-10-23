@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from services.license_service import LicenseService
+from services.auth import require_license
+from services.license_service import LicenseInfo, LicenseService
 
 router = APIRouter(tags=["licenses"])
 
@@ -46,6 +47,14 @@ def verify_license_key(payload: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return {"valid": True, "key": info.key, "holder": info.holder, "issued_at": info.issued_at}
+
+
+@router.get("/validate")
+def validate_license(
+    license: LicenseInfo = Depends(require_license),
+) -> dict[str, Any]:
+    """Validate a license key (X-License-Key header) without requiring user auth."""
+    return {"valid": True, "key": license.key, "holder": license.holder, "issued_at": license.issued_at}
 
 
 @router.get("/{key}")

@@ -7,17 +7,20 @@ Mounted by main.py with prefix="/api/v1/bookings".
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.auth import get_current_user
+from services.auth import get_current_user, require_license
 from services.booking_service import BookingService
 
 # No prefix here - main.py mounts with prefix="/api/v1/bookings"
-router = APIRouter(tags=["bookings"])
+router = APIRouter(
+    tags=["bookings"],
+    dependencies=[Depends(require_license)],
+)
 
 
 class BookingCreateRequest(BaseModel):
@@ -133,7 +136,7 @@ def get_booking(
     )
 
 
-@router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{booking_id}")
 def delete_booking(
     booking_id: UUID,
     current_user: dict = Depends(get_current_user),

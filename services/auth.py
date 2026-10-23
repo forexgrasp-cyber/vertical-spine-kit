@@ -17,11 +17,18 @@ from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import Boolean, Column, DateTime, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from services.license_service import LicenseInfo, LicenseService
+
+
+def _license_svc() -> LicenseService:
+    """Fresh LicenseService per call — picks up LICENSE_STORE_PATH env changes."""
+    return LicenseService()
 
 # Per-vertical auth database.
 _DB_PATH = Path(__file__).resolve().parent.parent / "vertical-spine-kit_auth.db"
@@ -416,3 +423,40 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return get_auth_service()._validate_access_token(credentials.credentials)
+
+
+def get_current_license(
+    x_license_key: str | None = Header(default=None, alias="X-License-Key"),
+) -> LicenseInfo | None:
+    """FastAPI dependency: validate the X-License-Key header.
+
+    Returns the LicenseInfo when a valid key is provided, or None when no
+    header is sent. Invalid keys raise 401.
+    """
+    if not x_license_key:
+        return None
+    try:
+        return _license_svc().verify_revoked(x_license_key)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or revoked license key",
+            headers={"WWW-Authenticate": "License"},
+        )
+
+
+def require_license(
+    license: LicenseInfo | None = Depends(get_current_license),
+) -> LicenseInfo:
+    """FastAPI dependency: require a valid license key.
+
+    Raises 401 when no X-License-Key header is present or the key is
+    invalid/revoked.
+    """
+    if license is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Valid license key required (X-License-Key header)",
+            headers={"WWW-Authenticate": "License"},
+        )
+    return license
