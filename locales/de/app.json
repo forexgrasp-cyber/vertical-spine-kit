@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Übersicht",
+  "nav.settings": "Einstellungen",
+  "common.save": "Speichern",
+  "common.cancel": "Abbrechen",
+  "common.delete": "Löschen",
+  "common.edit": "Bearbeiten",
+  "common.back": "Zurück",
+  "common.loading": "Wird geladen...",
+  "common.error": "Etwas ist schiefgelaufen",
+  "common.success": "Fertig",
+  "common.search": "Suchen",
+  "common.confirm": "Bestätigen"
+}

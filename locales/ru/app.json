@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Панель",
+  "nav.settings": "Настройки",
+  "common.save": "Сохранить",
+  "common.cancel": "Отменить",
+  "common.delete": "Удалить",
+  "common.edit": "Изменить",
+  "common.back": "Назад",
+  "common.loading": "Загрузка...",
+  "common.error": "Что-то пошло не так",
+  "common.success": "Готово",
+  "common.search": "Поиск",
+  "common.confirm": "Подтвердить"
+}

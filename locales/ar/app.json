@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "لوحة التحكم",
+  "nav.settings": "الإعدادات",
+  "common.save": "حفظ",
+  "common.cancel": "إلغاء",
+  "common.delete": "حذف",
+  "common.edit": "تعديل",
+  "common.back": "رجوع",
+  "common.loading": "جارٍ التحميل...",
+  "common.error": "حدث خطأ ما",
+  "common.success": "تم بنجاح",
+  "common.search": "بحث",
+  "common.confirm": "تأكيد"
+}

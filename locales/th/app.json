@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "แดชบอร์ด",
+  "nav.settings": "การตั้งค่า",
+  "common.save": "บันทึก",
+  "common.cancel": "ยกเลิก",
+  "common.delete": "ลบ",
+  "common.edit": "แก้ไข",
+  "common.back": "กลับ",
+  "common.loading": "กำลังโหลด...",
+  "common.error": "เกิดข้อผิดพลาด",
+  "common.success": "เสร็จสิ้น",
+  "common.search": "ค้นหา",
+  "common.confirm": "ยืนยัน"
+}

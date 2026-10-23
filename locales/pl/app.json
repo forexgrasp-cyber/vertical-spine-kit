@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Panel",
+  "nav.settings": "Ustawienia",
+  "common.save": "Zapisz",
+  "common.cancel": "Anuluj",
+  "common.delete": "Usuń",
+  "common.edit": "Edytuj",
+  "common.back": "Wstecz",
+  "common.loading": "Ładowanie...",
+  "common.error": "Coś poszło nie tak",
+  "common.success": "Gotowe",
+  "common.search": "Szukaj",
+  "common.confirm": "Potwierdź"
+}

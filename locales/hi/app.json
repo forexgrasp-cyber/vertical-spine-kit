@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "डैशबोर्ड",
+  "nav.settings": "सेटिंग्स",
+  "common.save": "सहेजें",
+  "common.cancel": "रद्द करें",
+  "common.delete": "हटाएं",
+  "common.edit": "संपादित करें",
+  "common.back": "वापस",
+  "common.loading": "लोड हो रहा है...",
+  "common.error": "कुछ गलत हो गया",
+  "common.success": "हो गया",
+  "common.search": "खोजें",
+  "common.confirm": "पुष्टि करें"
+}

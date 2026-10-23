@@ -1,0 +1,88 @@
+# Satellite stack for the shared Traefik edge at snapford.com.
+# Usage on the box (repo at /opt/sites/vertical-spine-kit, sibling shared at
+# /opt/sites/shared-canonical-services):
+#   docker compose -f docker-compose.satellite.yml up -d --build
+#
+# SQLite (default): docker compose -f docker-compose.satellite.yml up -d --build
+# PostgreSQL:        docker compose -f docker-compose.satellite.yml --profile postgres up -d --build
+#
+# Required .env keys: TRAEFIK_HOST, JWT_SECRET_KEY (same as hub)
+name: vertical-spine-kit
+services:
+  app:
+    image: vertical-spine-kit:latest
+    build:
+      context: .
+      target: prod
+      additional_contexts:
+        shared: ../shared-canonical-services
+    restart: unless-stopped
+    env_file: ${SITE_ENV_FILE:-.env}
+    environment:
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      # Hub URL is fixed in compose (not .env) so the container always
+      # reaches the hub service on the shared docker network.
+      SNAPFORD_HUB_INTERNAL_URL: http://hub:8153
+      SNAPFORD_BASE_DOMAIN: ${SNAPFORD_BASE_DOMAIN:-snapford.com}
+      SNAPFORD_PRODUCT_ID: ${SNAPFORD_PRODUCT_ID:-vertical-spine-kit}
+      DB_ENGINE: ${DB_ENGINE:-sqlite}
+    volumes:
+      - ../shared-canonical-services:/shared-canonical-services:ro
+      - app-data:/app/data
+    networks: [web, internal]
+    labels:
+      - traefik.enable=true
+      # Host() rule: explicit priority 10 beats the tools-host wildcard
+      # (priority 1) and loses only to the hub's apex paths (priority 100).
+      - traefik.http.routers.vertical-spine-kit-web.rule=Host(`${TRAEFIK_HOST:?set TRAEFIK_HOST in .env}`)
+      - traefik.http.routers.vertical-spine-kit-web.priority=10
+      - traefik.http.routers.vertical-spine-kit-web.entrypoints=websecure
+      # Wildcard cert: DNS-01 resolver (same as snapford-web's wildcard
+      # router) — zero per-host cert requests, no Let's Encrypt rate limit.
+      - traefik.http.routers.vertical-spine-kit-web.tls.certresolver=le
+      - traefik.http.routers.vertical-spine-kit-web.tls.domains[0].main=*.snapford.com
+      - traefik.http.routers.vertical-spine-kit-web.middlewares=ratelimit-vertical-spine-kit
+      - traefik.http.services.vertical-spine-kit-app.loadbalancer.server.port=8163
+      - traefik.http.middlewares.ratelimit-vertical-spine-kit.ratelimit.average=100
+      - traefik.http.middlewares.ratelimit-vertical-spine-kit.ratelimit.burst=50
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8163/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  # PostgreSQL (optional): docker compose --profile postgres up -d
+  # Default engine is SQLite (DB_ENGINE=sqlite, file in app-data volume).
+  db:
+    image: postgres:16-alpine
+    profiles: [postgres]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vertical-spine-kit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vertical-spine-kit}
+      POSTGRES_DB: ${POSTGRES_DB:-vertical-spine-kit_saas}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vertical-spine-kit} -d ${POSTGRES_DB:-vertical-spine-kit_saas}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+    logging: *default-logging
+
+volumes:
+  app-data: null
+  postgres_data: null
+
+networks:
+  web:
+    external: true
+  internal:
+    internal: true

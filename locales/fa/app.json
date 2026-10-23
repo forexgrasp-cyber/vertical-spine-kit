@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "داشبورد",
+  "nav.settings": "تنظیمات",
+  "common.save": "ذخیره",
+  "common.cancel": "انصراف",
+  "common.delete": "حذف",
+  "common.edit": "ویرایش",
+  "common.back": "بازگشت",
+  "common.loading": "در حال بارگذاری...",
+  "common.error": "مشکلی پیش آمد",
+  "common.success": "انجام شد",
+  "common.search": "جستجو",
+  "common.confirm": "تأیید"
+}

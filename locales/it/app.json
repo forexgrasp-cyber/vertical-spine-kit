@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Dashboard",
+  "nav.settings": "Impostazioni",
+  "common.save": "Salva",
+  "common.cancel": "Annulla",
+  "common.delete": "Elimina",
+  "common.edit": "Modifica",
+  "common.back": "Indietro",
+  "common.loading": "Caricamento...",
+  "common.error": "Qualcosa è andato storto",
+  "common.success": "Fatto",
+  "common.search": "Cerca",
+  "common.confirm": "Conferma"
+}

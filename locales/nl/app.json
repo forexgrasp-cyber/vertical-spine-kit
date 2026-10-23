@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Dashboard",
+  "nav.settings": "Instellingen",
+  "common.save": "Opslaan",
+  "common.cancel": "Annuleren",
+  "common.delete": "Verwijderen",
+  "common.edit": "Bewerken",
+  "common.back": "Terug",
+  "common.loading": "Laden...",
+  "common.error": "Er is iets misgegaan",
+  "common.success": "Klaar",
+  "common.search": "Zoeken",
+  "common.confirm": "Bevestigen"
+}

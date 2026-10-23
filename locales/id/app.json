@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Dasbor",
+  "nav.settings": "Pengaturan",
+  "common.save": "Simpan",
+  "common.cancel": "Batal",
+  "common.delete": "Hapus",
+  "common.edit": "Edit",
+  "common.back": "Kembali",
+  "common.loading": "Memuat...",
+  "common.error": "Terjadi kesalahan",
+  "common.success": "Selesai",
+  "common.search": "Cari",
+  "common.confirm": "Konfirmasi"
+}

@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Painel",
+  "nav.settings": "Definições",
+  "common.save": "Guardar",
+  "common.cancel": "Cancelar",
+  "common.delete": "Eliminar",
+  "common.edit": "Editar",
+  "common.back": "Voltar",
+  "common.loading": "Carregando...",
+  "common.error": "Algo deu errado",
+  "common.success": "Concluído",
+  "common.search": "Pesquisar",
+  "common.confirm": "Confirmar"
+}

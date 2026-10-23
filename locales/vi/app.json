@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Bảng điều khiển",
+  "nav.settings": "Cài đặt",
+  "common.save": "Lưu",
+  "common.cancel": "Hủy",
+  "common.delete": "Xóa",
+  "common.edit": "Chỉnh sửa",
+  "common.back": "Quay lại",
+  "common.loading": "Đang tải...",
+  "common.error": "Đã xảy ra lỗi",
+  "common.success": "Hoàn tất",
+  "common.search": "Tìm kiếm",
+  "common.confirm": "Xác nhận"
+}

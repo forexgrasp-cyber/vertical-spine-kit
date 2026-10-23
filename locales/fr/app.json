@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Tableau de bord",
+  "nav.settings": "Paramètres",
+  "common.save": "Enregistrer",
+  "common.cancel": "Annuler",
+  "common.delete": "Supprimer",
+  "common.edit": "Modifier",
+  "common.back": "Retour",
+  "common.loading": "Chargement...",
+  "common.error": "Une erreur est survenue",
+  "common.success": "Terminé",
+  "common.search": "Rechercher",
+  "common.confirm": "Confirmer"
+}

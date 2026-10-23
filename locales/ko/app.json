@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "대시보드",
+  "nav.settings": "설정",
+  "common.save": "저장",
+  "common.cancel": "취소",
+  "common.delete": "삭제",
+  "common.edit": "편집",
+  "common.back": "뒤로",
+  "common.loading": "로딩 중...",
+  "common.error": "문제가 발생했습니다",
+  "common.success": "완료",
+  "common.search": "검색",
+  "common.confirm": "확인"
+}

@@ -1,0 +1,58 @@
+/* Layout only - every color, font and radius comes from the platform
+   token stylesheet (/api/seo/style/tokens.css, generated from this
+   product's vertical theme). Never hardcode palette values here. */
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body, system-ui, sans-serif);
+  background: var(--surface, #f8fafc);
+  color: var(--text, #0f172a);
+}
+
+.shell {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-family: var(--font-heading, inherit);
+  color: var(--brand-strong, #1d4ed8);
+}
+
+h1 {
+  font-family: var(--font-heading, inherit);
+  color: var(--brand-strong, #1d4ed8);
+}
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.theme-toggle,
+.lang-select {
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-raised, #ffffff);
+  color: var(--text, #0f172a);
+  border-radius: var(--radius, 8px);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+main p {
+  color: var(--text-muted, #475569);
+}

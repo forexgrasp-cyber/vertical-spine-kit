@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "仪表盘",
+  "nav.settings": "设置",
+  "common.save": "保存",
+  "common.cancel": "取消",
+  "common.delete": "删除",
+  "common.edit": "编辑",
+  "common.back": "返回",
+  "common.loading": "加载中...",
+  "common.error": "出错了",
+  "common.success": "完成",
+  "common.search": "搜索",
+  "common.confirm": "确认"
+}

@@ -1,0 +1,14 @@
+{
+  "nav.dashboard": "Dashboard",
+  "nav.settings": "Settings",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete",
+  "common.edit": "Edit",
+  "common.back": "Back",
+  "common.loading": "Loading...",
+  "common.error": "Something went wrong",
+  "common.success": "Done",
+  "common.search": "Search",
+  "common.confirm": "Confirm"
+}
