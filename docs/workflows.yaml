@@ -1,0 +1,295 @@
+# Workflow declarations for callagent (saas_vertical)
+# Each workflow must satisfy PRODUCTION_STANDARDS.md §13 fields
+
+workflows:
+  - name: voice_call_consent_flow
+    trigger: "Twilio inbound call POST /api/v1/agent/{tenant_id}/webhook?step=consent"
+    steps:
+      - order: 1
+        service: shared.billing.TierGuard
+        action: "check_access(tenant_id, 'voice_agent')"
+        description: "Tier gate - deny free tenants"
+      - order: 2
+        service: shared.rate_limit.RateLimiter
+        action: "check_limit(identifier=tenant_id, scope='tenant', endpoint='voice_webhook')"
+        description: "Per-tenant rate limit (60/min)"
+      - order: 3
+        service: services.voice_agent
+        action: "play consent TwiML + <Gather speech>"
+        description: "Prompt for recording consent"
+      - order: 4
+        service: services.calls_db
+        action: "create_call(call_sid, tenant_id, from_number, to_number)"
+        description: "Idempotent call record creation"
+      - order: 5
+        service: shared.audit.ImmutableAuditLog
+        action: "log_event(event_type='voice_consent', ...)"
+        description: "Immutable consent audit entry"
+    state_machine:
+      - state: "consent_prompted"
+        transitions: ["consent_granted", "consent_denied", "timeout"]
+      - state: "consent_granted"
+        transitions: ["gather_speech"]
+      - state: "consent_denied"
+        transitions: ["hangup"]
+    side_effects:
+      - "voice_calls row created (tenant-scoped)"
+      - "voice_consent row created (granted/denied)"
+      - "ImmutableAuditLog hash-chained entry"
+      - "Analytics event: voice.consent_prompted / voice.consent_granted / voice.consent_denied"
+    failure_handling:
+      - "Tier deny → TwiML <Say> + <Hangup> (no call record)"
+      - "Rate limit → TwiML 'Too many requests' + <Hangup>"
+      - "Signature invalid → 400 + analytics event"
+      - "DB error → fail-open for consent prompt, log error"
+    money_impact: "None (consent step is free)"
+    observability:
+      - correlation_id: "from Twilio CallSid + request context"
+      - metrics: "voice.consent_prompted, voice.consent_granted, voice.consent_denied, voice.tier_denied, voice.rate_limited"
+      - dashboard: "shared.metrics.analytics_router /voice/metrics"
+    proof: "tests/test_e2e_workflows.py::test_workflow_consent_granted_full_flow, test_workflow_consent_denied_hangs_up"
+
+  - name: voice_call_gather_response_flow
+    trigger: "Twilio inbound call POST /api/v1/agent/{tenant_id}/webhook?step=gather (SpeechResult)"
+    steps:
+      - order: 1
+        service: shared.billing.TierGuard
+        action: "check_access(tenant_id, 'voice_agent')"
+        description: "Tier gate"
+      - order: 2
+        service: shared.rate_limit.RateLimiter
+        action: "check_limit(...)"
+        description: "Rate limit"
+      - order: 3
+        service: services.voice_agent
+        action: "LLM intent extraction (gpt-4o-mini + keyword fallback)"
+        description: "Extract intent + structured fields (service, datetime, address, callback_phone)"
+      - order: 4
+        service: shared.rag.voice_kb
+        action: "query_kb(tenant_id, query_text, top_k=3)"
+        description: "Per-tenant RAG context retrieval"
+      - order: 5
+        service: services.voice_agent
+        action: "_build_spoken_response(intent, fields, context, tenant_id)"
+        description: "Compose contextual spoken response"
+      - order: 6
+        service: services.calls_db
+        action: "update_call_status(call_sid, extracted_fields, recording_sid)"
+        description: "Persist extracted fields + recording metadata"
+      - order: 6
+        service: shared.billing.BillingService
+        action: "record_usage(tenant_id, cost_estimate, metadata={service: 'voice_agent', operation: 'call'})"
+        description: "Voice-minute metering"
+      - order: 7
+        service: shared.integrations.emission
+        action: "emit_event('voice.call_completed', tenant_id, payload)"
+        description: "Event bus emission"
+    state_machine:
+      - state: "gathering_speech"
+        transitions: ["responding", "timeout"]
+      - state: "responding"
+        transitions: ["completed", "callback_requested"]
+    side_effects:
+      - "voice_calls row updated (status, extracted_fields, recording_sid)"
+      - "voice_recordings row created (if recording_url present)"
+      - "Billing ledger entry (voice-minute cost)"
+      - "Analytics event: voice.call_completed"
+      - "Event bus: voice.call_completed"
+    failure_handling:
+      - "LLM failure → keyword fallback extraction"
+      - "KB query failure → empty context, response still composed"
+      - "Billing failure → logged, call continues"
+      - "Emission failure → logged, call continues"
+    money_impact: "Voice-minute cost recorded to billing ledger (~$0.10/min)"
+    observability:
+      - correlation_id: "CallSid"
+      - metrics: "voice.call_completed, voice.intent_extracted, voice.kb_queried, voice.metered"
+    proof: "tests/test_e2e_workflows.py::test_workflow_consent_granted_full_flow"
+
+  - name: subscription_activation_flow
+    trigger: "POST /api/v1/agent/{tenant_id}/billing/subscribe (authenticated)"
+    steps:
+      - order: 1
+        service: shared.auth
+        action: "get_current_user + require_tenant_access"
+        description: "Auth + tenant ownership validation"
+      - order: 2
+        service: shared.billing.UnifiedPaymentService
+        action: "create_subscription(product_id, amount, interval, customer_email, provider, metadata={tenant_id, tier})"
+        description: "Create recurring subscription with payment provider"
+      - order: 3
+        service: shared.billing.EntitlementsService
+        action: "grant(account=tenant_id, entitlement='voice_agent', source='stripe:subscription', tier=payload.tier, reference=subscription_id)"
+        description: "Persist entitlement grant"
+      - order: 4
+        service: shared.billing.TierGuard
+        action: "set_tenant_tier(tenant_id, payload.tier, reason='subscription_created')"
+        description: "Update in-memory tier cache"
+    state_machine:
+      - state: "subscription_pending"
+        transitions: ["subscription_active", "subscription_failed"]
+      - state: "subscription_active"
+        transitions: ["canceled", "past_due"]
+    side_effects:
+      - "EntitlementsService grant (persisted, survives restart)"
+      - "TierGuard tier updated (ephemeral cache)"
+      - "Analytics event: billing.subscription_created"
+    failure_handling:
+      - "Payment provider failure → 502, no entitlement grant"
+      - "Entitlement grant failure → logged, subscription still created"
+      - "TierGuard failure → logged, subscription still created"
+    money_impact: "Recurring monthly charge (starter=$29, pro=$79, agency=$199)"
+    observability:
+      - correlation_id: "subscription_id from provider"
+      - metrics: "billing.subscription_created, billing.entitlement_granted"
+    proof: "tests/test_e2e_workflows.py::test_integration_subscription_activates_voice_agent"
+
+  - name: payment_webhook_activation_flow
+    trigger: "POST /api/v1/agent/{tenant_id}/billing/webhook/{provider} (provider POST, no session)"
+    steps:
+      - order: 1
+        service: shared.billing.UnifiedPaymentService
+        action: "verify_and_handle(raw_payload, headers, provider)"
+        description: "Signature verification + event parsing (fail-closed)"
+      - order: 2
+        service: services.calls_db
+        action: "add_customer_tenant(customer_id, tenant_id, provider)"
+        description: "Map payment customer_id → tenant_id"
+      - order: 3
+        service: shared.billing.EntitlementsService
+        action: "grant(account=tenant_id, entitlement='voice_agent', source='{provider}:webhook', tier=metadata.tier)"
+        description: "Grant voice_agent entitlement on subscription/checkout/invoice event"
+      - order: 4
+        service: shared.billing.TierGuard
+        action: "set_tenant_tier(tenant_id, metadata.tier, reason='payment_webhook')"
+        description: "Update tier cache"
+    state_machine:
+      - state: "webhook_received"
+        transitions: ["verified", "rejected"]
+      - state: "verified"
+        transitions: ["entitlement_granted", "entitlement_grant_failed"]
+    side_effects:
+      - "customer_tenants mapping created"
+      - "EntitlementsService grant (persisted)"
+      - "TierGuard tier updated"
+      - "Analytics: billing.webhook_processed, billing.entitlement_granted"
+    failure_handling:
+      - "Invalid signature → 400, no processing"
+      - "Verification failure → 400, logged"
+      - "Entitlement/TierGuard failure → logged, webhook returns 200 OK (idempotent)"
+    money_impact: "Activates paid tier access for tenant"
+    observability:
+      - correlation_id: "provider event_id + tenant_id"
+      - metrics: "billing.webhook_received, billing.webhook_verified, billing.entitlement_granted"
+    proof: "tests/test_e2e_workflows.py::test_integration_subscription_activates_voice_agent"
+
+  - name: call_list_dashboard_flow
+    trigger: "GET /api/v1/agent/{tenant_id}/calls (authenticated)"
+    steps:
+      - order: 1
+        service: shared.auth
+        action: "get_current_user + require_tenant_access"
+        description: "Auth + tenant ownership validation"
+      - order: 2
+        service: services.calls_db
+        action: "list_tenant_calls(tenant_id, limit, offset)"
+        description: "Paginated tenant-scoped call list"
+    state_machine: []
+    side_effects: []
+    failure_handling:
+      - "Auth failure → 401"
+      - "Tenant access denied → 403"
+    money_impact: "None"
+    observability:
+      - metrics: "voice.calls_listed"
+    proof: "tests/test_e2e_workflows.py::test_service_calls_db_full_lifecycle"
+
+  - name: kb_ingest_flow
+    trigger: "POST /api/v1/agent/{tenant_id}/kb/ingest (authenticated)"
+    steps:
+      - order: 1
+        service: shared.auth
+        action: "get_current_user + require_tenant_access"
+        description: "Auth + tenant ownership validation"
+      - order: 2
+        service: shared.rag.voice_kb
+        action: "ingest_services_json / ingest_pricing_csv / ingest_faq_markdown"
+        description: "Ingest per-tenant KB source (Chroma + embeddings)"
+      - order: 3
+        service: services.calls_db
+        action: "voice_kb_ingest audit log"
+        description: "Audit ingest job"
+    state_machine:
+      - state: "ingesting"
+        transitions: ["done", "empty", "failed"]
+    side_effects:
+      - "Chroma collection updated with tenant_id prefix"
+      - "voice_kb_ingest audit row"
+    failure_handling:
+      - "Ingest failure → 500, audit log records error"
+    money_impact: "None"
+    observability:
+      - metrics: "voice.kb_ingested_chunks"
+    proof: "tests/test_e2e_workflows.py::test_service_kb_ingest_and_query_roundtrip"
+
+  - name: recording_purge_flow
+    trigger: "Celery beat daily 02:00 UTC → services.compliance.purge_expired_recordings"
+    steps:
+      - order: 1
+        service: services.compliance
+        action: "purge_expired_recordings(ttl_days=30)"
+        description: "Find recordings older than TTL"
+      - order: 2
+        service: services.compliance
+        action: "Twilio API delete recording media (best-effort)"
+        description: "Delete Twilio recording media"
+      - order: 3
+        service: services.calls_db
+        action: "delete_recording(recording_sid)"
+        description: "Remove DB row"
+      - order: 3
+        service: shared.gdpr.service
+        action: "GDPR purge compliance"
+        description: "TCPA/GDPR compliance"
+    state_machine:
+      - state: "purging"
+        transitions: ["purged", "partial_failure"]
+    side_effects:
+      - "voice_recordings rows deleted"
+      - "Twilio media deleted (best-effort)"
+      - "Analytics: compliance.recordings_purged"
+    failure_handling:
+      - "Twilio API failure → logged, DB row still deleted"
+      - "Partial purge → logged, next run retries"
+    money_impact: "None (compliance cost savings)"
+    observability:
+      - metrics: "compliance.recordings_purged, compliance.twilio_delete_failed"
+    proof: "tests/test_voice_agent.py::test_compliance_purge_structure, test_compliance_purge_older_than"
+
+  - name: gdpr_erasure_flow
+    trigger: "POST /api/v1/agent/{tenant_id}/gdpr/erase (or manual admin)"
+    steps:
+      - order: 1
+        service: shared.gdpr.service
+        action: "GdprService.erase_subject(tenant_id)"
+        description: "Erase all PII for tenant"
+      - order: 2
+        service: services.calls_db
+        action: "erase_call_subject(tenant_id)"
+        description: "PII encryption key rotation + data nullification"
+    state_machine:
+      - state: "erasure_requested"
+        transitions: ["erasure_completed", "erasure_failed"]
+    side_effects:
+      - "voice_calls PII fields encrypted/redacted"
+      - "voice_consent PII redacted"
+      - "voice_recordings PII redacted"
+      - "ImmutableAuditLog: gdpr_erasure event"
+    failure_handling:
+      - "Partial erasure → logged, retryable"
+    money_impact: "None"
+    observability:
+      - metrics: "gdpr.erasure_requested, gdpr.erasure_completed"
+    proof: "tests/test_final_verify.py (customer→tenant mapping + erase)"
+
+version: "2026.10"

@@ -1,4 +1,4 @@
-# Vertical Spine Kit - single-container image: backend serves the API and the
+# CallAgent - single-container image: backend serves the API and the
 # built SPA. Canonical shared services mount at runtime via PYTHONPATH
 # (compose binds ../shared-canonical-services) - no rebuild needed when
 # shared updates.

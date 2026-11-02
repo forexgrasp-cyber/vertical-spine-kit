@@ -1,0 +1,38 @@
+project:
+  name: callagent
+  display_name: Vertical Spine Kit
+  description: Multi-tenant FastAPI + React SaaS spine for local business services
+
+nature:
+  primary: saas_vertical
+  secondary: []
+  description: |
+    Multi-tenant vertical SaaS serving local businesses with per-tenant
+    voice agents, subscription billing, CRUD, and dashboard.
+
+target_locales:
+  - en
+  - es
+  - fr
+  - de
+
+payment_providers:
+  - stripe
+  - lemonsqueezy
+  - paypal
+  - gumroad
+
+deploy_target: docker-compose
+
+public_surfaces:
+  - /api/v1/agent/{tenant_id}/webhook          # Twilio voice webhook (TwiML)
+  - /api/v1/agent/{tenant_id}/kb/ingest         # Tenant KB ingest (auth)
+  - /api/v1/agent/{tenant_id}/calls             # Call list (auth)
+  - /api/v1/agent/{tenant_id}/calls/{call_sid}  # Single call (auth)
+  - /api/v1/agent/{tenant_id}/billing/checkout  # Payment checkout (auth)
+  - /api/v1/agent/{tenant_id}/billing/subscribe # Subscription (auth)
+  - /api/v1/agent/{tenant_id}/billing/usage     # Usage report (auth)
+  - /api/v1/agent/{tenant_id}/billing/tier      # Tier check (auth)
+  - /api/v1/agent/{tenant_id}/billing/webhook/{provider}  # Payment webhook (fail-closed)
+
+version: 2026.10

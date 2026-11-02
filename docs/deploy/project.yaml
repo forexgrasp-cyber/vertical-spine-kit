@@ -1,0 +1,138 @@
+# Deployment declaration for callagent
+# Required by PRODUCTION_STANDARDS.md §14.2
+# Scheme: the shared VPS estate (DEPLOYMENT_PLAYBOOK.md) - the VPS deploys.
+
+project:
+  name: callagent
+  repo: "https://github.com/forexgrasp-cyber/callagent"
+  branch: main
+  compose_project: callagent
+  vps_dir: /opt/sites/callagent
+  domain: callagent.snapford.com
+
+deployment:
+  target: docker-compose
+  compose_file: docker-compose.satellite.yml
+  deploy_mechanism: "VPS watcher (daily cron 07:17 UTC) -> deploy/vps/deploy.sh (GENERATED from deploy/vps/render.json - never hand-edit)"
+  deploy_manual: "workflow_dispatch .github/workflows/deploy-vps.yml"
+  bootstrap_one_time: "bash deploy/vps/server_bootstrap.sh (on the VPS)"
+  edge:
+    provider: traefik
+    route: "Host(`callagent.snapford.com`)"
+    network: web
+    tls: wildcard-cert (*.snapford.com, DNS-01 resolver 'le')
+    published_ports: "none public; loopback-only 127.0.0.1:8163:8163 serves the deploy health gate (incident 9.2 bans 80/443)"
+  health:
+    gate: "http://127.0.0.1:8163/api/health (deploy.sh, loopback)"
+    liveness: "/api/health"
+    readiness: "/api/ready"
+    container_check: "python urllib http://127.0.0.1:8163/api/health (compose healthcheck)"
+    timeout_s: 90
+  rollback: "automatic to :prev image on failed health/surface gate (generated deploy.sh)"
+  surface_gate:
+    - "https://callagent.snapford.com/robots.txt|User-agent"
+    - "https://callagent.snapford.com/sitemap.xml|<urlset"
+  migrations:
+    engine: "SQLAlchemy create_all on import (services/calls_db.py) - no alembic yet"
+    run_on_deploy: true
+    rollback_on_failure: false  # schema is additive; rollback restores previous image
+  backups:
+    schedule: "not configured yet (TODO: render backup.sh via shared.deployment.backup_service)"
+    destination: "unset"
+    restore_tested: false
+  secrets:
+    provider: ".env on the VPS (mode 600), scaffolded by server_bootstrap.sh"
+    required:
+      - TRAEFIK_HOST
+      - JWT_SECRET_KEY
+      - PII_ENCRYPTION_KEY   # absent => PII stored PLAINTEXT (boot warns loudly)
+      - APP_SECRET_KEY
+      - TWILIO_ACCOUNT_SID
+      - TWILIO_AUTH_TOKEN
+      - STRIPE_SECRET_KEY
+      - STRIPE_WEBHOOK_SECRET
+      - OPENAI_API_KEY
+    optional:
+      - LICENSE_SIGNING_SECRET
+      - VOICE_COST_PER_MINUTE
+      - VOICE_WEBHOOK_RATE_LIMIT
+    rotation_schedule: "0 0 1 * *"  # Monthly 1st (manual)
+  surfaces:
+    - path: "/api/v1/agent/{tenant_id}/webhook"
+      type: "twilio_webhook"
+      auth: "twilio_signature"
+    - path: "/api/v1/agent/{tenant_id}/kb/ingest"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/calls"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/billing/checkout"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/billing/subscribe"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/billing/usage"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/billing/tier"
+      type: "api"
+      auth: "jwt_session"
+    - path: "/api/v1/agent/{tenant_id}/billing/webhook/{provider}"
+      type: "provider_webhook"
+      auth: "provider_signature"
+
+docker_compose:
+  file: "docker-compose.satellite.yml"
+  services:
+    - name: app
+      build: ". (target: prod; additional_contexts: shared -> ../shared-canonical-services)"
+      ports: ["127.0.0.1:8163:8163 (loopback health gate only)"]
+      env_file: ".env"
+      networks: "[web (external, shared Traefik edge), internal]"
+      command: "uvicorn main:app --host 0.0.0.0 --port 8163"
+      volumes: "['../shared-canonical-services:/shared-canonical-services:ro', 'app-data:/app/data']"
+    - name: db
+      image: "postgres:16-alpine"
+      profile: "postgres (opt-in; default DB_ENGINE=sqlite in app-data volume)"
+      volumes: ["postgres_data:/var/lib/postgresql/data"]
+      networks: [internal]
+
+volumes:
+  - app-data
+  - postgres_data
+
+networks:
+  - web (external: true - shared Traefik edge)
+  - internal (internal: true)
+
+ci_cd:
+  policy: "GITHUB_ACTIONS_TEMPLATE.md compliant - estate rule: local gates, Actions deploys only"
+  routine_github_actions: false
+  automatic_triggers: "none (workflow_dispatch only - actions_rules_guard bans push/PR)"
+  deploy_workflow: ".github/workflows/deploy-vps.yml (workflow_dispatch -> VPS watcher -> generated deploy.sh)"
+  local_gates:
+    - lint: ruff
+    - test: "python -m pytest tests/ (64/64 green)"
+  deploy_gates:
+    - health: "loopback /api/health (90s timeout)"
+    - surfaces: "public robots.txt + sitemap.xml markers"
+    - rollback: "automatic to :prev image"
+
+monitoring:
+  health_checks:
+    - name: container_healthcheck
+      command: "python urllib http://127.0.0.1:8163/api/health (compose, interval 30s)"
+    - name: watcher_probes
+      command: "deploy_watcher.sh probes https://callagent.snapford.com/{,/health,/healthz} after each deploy"
+    - name: deploy_watcher_guard
+      command: "shared/deployment/deploy_watch_guard.py (estate vs site-list agreement)"
+  alerts:
+    - name: deploy_failed
+      condition: "watcher state file not advanced / deploy.sh exit 1 (auto-rollback ran)"
+      channel: "/var/log/site-deploy.log (TODO: ALERT_URL/ALERT_EMAIL in .env)"
+  reports:
+    - status: "not configured yet (estate three-reports TODO)"
+
+version: "2026.10"

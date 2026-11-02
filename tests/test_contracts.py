@@ -1,6 +1,6 @@
 """Generated test_contracts.py template (for scaffold output)."""
 
-TEST_CONTRACTS_TEMPLATE = '''"""Contract tests for vertical-spine-kit (auth + core contracts)."""
+TEST_CONTRACTS_TEMPLATE = '''"""Contract tests for callagent (auth + core contracts)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +11,7 @@ from main import app
 
 
 class TestVerticalSpineKitContracts(AuthContractTestBase):
-    """Contract tests for vertical-spine-kit."""
+    """Tests for callagent (auth + core contracts)."""
 
     @pytest.fixture
     def client(self):

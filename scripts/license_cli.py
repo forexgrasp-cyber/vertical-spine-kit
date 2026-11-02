@@ -1,8 +1,8 @@
-"""CLI for minting / verifying vertical-spine-kit license keys (#5).
+"""CLI for minting / verifying callagent license keys (#5).
 
 Usage:
     py scripts/license_cli.py mint [--holder "Acme Corp"]
-    py scripts/license_cli.py verify VSK-XXXX-XXXX-...
+    py scripts/license_cli.py verify CA-XXXX-XXXX-...
     py scripts/license_cli.py stats
 
 Env:
@@ -19,14 +19,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from services.license_service import LicenseError, LicenseService  # noqa: E402
+from shared.digital_products import LicenseError, LicenseService  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="vertical-spine-kit license-key tool")
+    ap = argparse.ArgumentParser(description="callagent license-key tool")
     sub = ap.add_subparsers(dest="command", required=True)
 
-    p_mint = sub.add_parser("mint", help="issue a new VSK-... license key")
+    p_mint = sub.add_parser("mint", help="issue a new CA-... license key")
     p_mint.add_argument("--holder", default="", help="holder tag bound to the key")
 
     p_verify = sub.add_parser("verify", help="statelessly verify a license key")

@@ -1,4 +1,4 @@
-"""Shared canonical booking service wrapper for vertical-spine-kit.
+"""Shared canonical booking service wrapper for callagent.
 
 Delegates to shared.booking.service.BookingService for centralized
 availability / conflict enforcement.

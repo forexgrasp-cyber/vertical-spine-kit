@@ -1,4 +1,4 @@
-"""Authentication routes for vertical-spine-kit."""
+"""Authentication routes for callagent."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, EmailStr, Field
 
-from services.auth import AuthService, get_auth_service, get_current_user
+from shared.auth import JWTAuthService as AuthService, get_auth_service, get_current_user
 
 # No prefix here - main.py mounts with prefix="/api/auth"
 router = APIRouter(tags=["Authentication"])

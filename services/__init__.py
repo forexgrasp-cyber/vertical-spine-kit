@@ -1,4 +1,4 @@
-"""Shared service wrappers for vertical-spine-kit.
+"""Shared service wrappers for callagent.
 
 Re-exports the shared canonical booking / staff / calendar facades
 alongside any vertical-specific domain services.

@@ -1,4 +1,4 @@
-"""License-key routes (#5) for vertical-spine-kit sales.
+"""License-key routes (#5) for callagent sales.
 
 Mounted by main.py at prefix="/api/v1/licenses".
 
@@ -15,8 +15,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from services.auth import require_license
-from services.license_service import LicenseInfo, LicenseService
+from shared.auth import require_license
+from shared.digital_products import LicenseInfo, LicenseService
 
 router = APIRouter(tags=["licenses"])
 

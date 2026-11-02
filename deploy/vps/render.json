@@ -1,0 +1,22 @@
+{
+  "_comment": "Render inputs for deploy/vps/deploy.sh. The file itself is GENERATED from shared-canonical-services/shared/deployment/deploy_service.py - edit this JSON (or the generator), then re-render: SHARED_CANONICAL_SERVICES=../shared-canonical-services python scripts/check_deploy_generated.py --write. Never hand-edit the .sh: the next render throws your change away. CallAgent joins the shared Traefik edge: docker-compose.satellite.yml attaches the external web network, publishes NO public host ports (a loopback-only 127.0.0.1:8163 mapping serves the deploy health gate - incident 9.2 bans 80/443), and the wildcard *.snapford.com cert is the edge-owned DNS-01 one. SQLite lives in the app-data named volume; PostgreSQL is opt-in via the compose postgres profile.",
+  "deploy": {
+    "file": "deploy.sh",
+    "args": {
+      "repo_dir": "/opt/sites/callagent",
+      "image_name": "callagent:latest",
+      "health_url": "http://127.0.0.1:8163/api/health",
+      "health_timeout_s": 90,
+      "health_interval_s": 2,
+      "compose_files": [
+        "docker-compose.satellite.yml"
+      ],
+      "compose_project": "callagent",
+      "surface_urls": [
+        "https://callagent.snapford.com/robots.txt|User-agent",
+        "https://callagent.snapford.com/sitemap.xml|<urlset"
+      ]
+    },
+    "_comment": "Health gate is loopback (fast, no Cloudflare/edge dependency). The surface gate probes the PUBLIC edge after it: robots.txt must contain User-agent, sitemap.xml must contain <urlset - a Traefik label regression or a router 307 rolls the deploy back exactly like a failed health gate. No api_gate_url yet: add one once a light unauthenticated app route exists (pattern: dangwire /api/templates/)."
+  }
+}

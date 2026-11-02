@@ -37,5 +37,5 @@ def test_design_conformance_passes() -> None:
         resp = client.get(url)
         return resp.status_code, dict(resp.headers), resp.text
 
-    result = audit_product("vertical-spine-kit", "http://test", fetch=fetch)
+    result = audit_product("callagent", "http://test", fetch=fetch)
     assert result.ok, [f"{c.name}: {c.detail}" for c in result.failures()]

@@ -1,0 +1,56 @@
+# Deploy (manual dispatch only) - callagent satellite on the shared VPS edge.
+#
+# The estate's canonical deployer is the VPS watcher (daily cron); this
+# workflow is the HUMAN re-run path (GITHUB_ACTIONS_TEMPLATE.md rule 2).
+# It dispatches the same pipeline the cron runs: generated health-gated
+# deploy.sh with auto-rollback. No push/PR triggers - actions_rules_guard
+# fails those on purpose.
+
+name: Deploy callagent
+
+on:
+  workflow_dispatch: # manual only, never push/PR (estate rule 2)
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.VPS_ENABLED == 'true'
+    concurrency:
+      group: deploy-single # serialize across ALL estate deploys
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Deploy via VPS watcher (single site)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script: bash /opt/sites/scripts/deploy_watcher.sh callagent
+
+      - name: Verify public surfaces
+        run: |
+          set -euo pipefail
+          probe() { # url expected_code
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$1" || echo 000)
+            [ "$code" = "$2" ] || { echo "FAIL $1 -> $code (want $2)"; exit 1; }
+            echo "OK $1 -> $code"
+          }
+          probe https://callagent.snapford.com/api/health 200
+          probe https://callagent.snapford.com/robots.txt 200
+          probe https://callagent.snapford.com/sitemap.xml 200
+
+  deploy-guard:
+    if: vars.VPS_ENABLED != 'true'
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Loud misconfiguration failure
+        run: |
+          echo "::error::VPS_ENABLED is not 'true' - nothing deployed."
+          exit 1

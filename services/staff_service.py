@@ -1,4 +1,4 @@
-"""Shared canonical staff service wrapper for vertical-spine-kit.
+"""Shared canonical staff service wrapper for callagent.
 
 Delegates to shared.staff.service.StaffService for tenant-scoped staff
 management.

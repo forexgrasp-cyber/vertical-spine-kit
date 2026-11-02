@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { LangSelect, ThemeToggle } from '@shared/widgets';
 import { loadTranslations, t } from './i18n';
+import CallLog from './components/CallLog';
 
 type License = {
   key: string;
@@ -40,6 +41,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'valid' | 'invalid' | 'none'>('none');
+  const [tenantId, setTenantId] = useState('demo-tenant');
 
   const handleLangChange = (code: string) => {
     setLang(code);
@@ -287,6 +289,8 @@ export default function App() {
                 </table>
               )}
             </section>
+
+            <CallLog tenantId={tenantId} />
           </>
         )}
         {error && <p className="error">{error}</p>}

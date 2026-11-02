@@ -1,4 +1,4 @@
-"""Test configuration for vertical-spine-kit.
+"""Test configuration for callagent.
 
 Sets the license signing secret so HMAC-signed license keys can be minted
 and verified in tests without requiring production env vars.

@@ -1,4 +1,4 @@
-"""Shared meeting API routes for vertical-spine-kit.
+"""Shared meeting API routes for callagent.
 
 Exposes the shared canonical MeetingService as HTTP endpoints.
 Mounted by main.py with prefix="/api/v1/meetings".
@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.auth import get_current_user
+from shared.auth import get_current_user
 from services.meeting_service import MeetingService
 
 # No prefix here - main.py mounts with prefix="/api/v1/meetings"

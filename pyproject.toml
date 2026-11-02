@@ -1,7 +1,7 @@
 [project]
-name = "vertical-spine-kit"
+name = "callagent"
 version = "1.0.0"
-description = "Vertical Spine Kit - Snapford vertical SaaS"
+description = "CallAgent - Voice AI for Local Businesses"
 requires-python = ">=3.12"
 
 [tool.pytest.ini_options]

@@ -1,4 +1,4 @@
-"""Shared booking API routes for vertical-spine-kit.
+"""Shared booking API routes for callagent.
 
 Exposes the shared canonical BookingService as HTTP endpoints.
 Mounted by main.py with prefix="/api/v1/bookings".
@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.auth import get_current_user, require_license
+from shared.auth import get_current_user, require_license
 from services.booking_service import BookingService
 
 # No prefix here - main.py mounts with prefix="/api/v1/bookings"

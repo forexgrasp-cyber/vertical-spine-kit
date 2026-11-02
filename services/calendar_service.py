@@ -1,4 +1,4 @@
-"""Shared canonical calendar service wrapper for vertical-spine-kit.
+"""Shared canonical calendar service wrapper for callagent.
 
 Delegates to shared.calendar.service.CalendarService for event management
 and available-slot generation.

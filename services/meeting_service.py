@@ -1,4 +1,4 @@
-"""Shared canonical meeting service wrapper for vertical-spine-kit.
+"""Shared canonical meeting service wrapper for callagent.
 
 Delegates to shared.meeting.service.MeetingService for staff/customer
 availability-aware meeting scheduling.

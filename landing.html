@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%230f172a'/%3E%3C/svg%3E">
+    <title>Voice AI for Local Business | Vertical Spine Kit</title>
+    <meta name="description" content="Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.">
+    <link rel="canonical" href="https://callagent.example.com/">
+    
+    
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Voice AI for Local Business">
+    <meta property="og:description" content="Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.">
+    <meta property="og:url" content="https://callagent.example.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Vertical Spine Kit">
+    <meta property="og:locale" content="en">
+    <meta property="og:image" content="https://callagent.example.com/og-image.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Voice AI for Local Business">
+    <meta name="twitter:description" content="Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.">
+    <meta name="twitter:image" content="https://callagent.example.com/og-image.png">
+    
+
+    <!-- Hreflang -->
+    
+    <!-- Schema.org -->
+    
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Vertical Spine Kit",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}</script>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does the voice agent work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "When a customer calls your Twilio number, our webhook handles the call: plays a consent prompt, gathers speech, extracts intent using LLM, queries your knowledge base, and responds with a natural-sounding answer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I customize the knowledge base?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! Ingest services (JSON), pricing (CSV), and FAQs (Markdown) per tenant. The RAG system retrieves the top-3 most relevant chunks for every query."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tiers are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Voice agent requires Starter+ tier. Free tier is denied with a friendly message. Upgrade via Stripe checkout or subscription - entitlements are granted automatically via webhook."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it compliant?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Consent is captured and written to an immutable hash-chained audit log. Recordings are purged after 30 days. PII (phone, address) is encrypted at rest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does it cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Starter: \\/mo + \\.10/min voice. Pro: \\/mo + \\.08/min. Agency: \\/mo + \\.06/min. No setup fees."
+      }
+    }
+  ]
+}</script>
+    <!-- Resource Hints -->
+    
+    <!-- Styles -->
+    
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "CallAgent", "url": "https://callagent.example.com/", "description": "CallAgent \u2014 Voice AI for Local Business"}</script>
+    <style>
+:root{
+  --lp-brand:#0ea5e9;
+  --lp-brand-dark:#0284c7;
+  --lp-btn-bg:#0b7db1;
+  --lp-chip-fg:#0a74a3;
+  --lp-bg:#f8fafc;--lp-surface:#ffffff;--lp-text:#0f172a;--lp-muted:#475569;
+  --lp-border:#e2e8f0;--lp-hero:linear-gradient(160deg,#0f172a 0%,#1e293b 100%);
+  --lp-hero-text:#f8fafc;--lp-hero-muted:#cbd5e1;--lp-shadow:0 10px 30px rgba(15,23,42,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --lp-chip-fg:#0ea5e9;
+    --lp-bg:#0b1120;--lp-surface:#111827;--lp-text:#e2e8f0;--lp-muted:#94a3b8;
+    --lp-border:#1f2937;--lp-hero:linear-gradient(160deg,#020617 0%,#0f172a 100%);
+    --lp-hero-text:#f8fafc;--lp-hero-muted:#94a3b8;--lp-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+}
+[data-theme="dark"]{
+  --lp-chip-fg:#0ea5e9;
+  --lp-bg:#0b1120;--lp-surface:#111827;--lp-text:#e2e8f0;--lp-muted:#94a3b8;
+  --lp-border:#1f2937;--lp-hero:linear-gradient(160deg,#020617 0%,#0f172a 100%);
+  --lp-hero-text:#f8fafc;--lp-hero-muted:#94a3b8;--lp-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+body{margin:0;background:var(--lp-bg);color:var(--lp-text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.lp-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  max-width:70rem;margin:0 auto;padding:.9rem 1.25rem;flex-wrap:wrap}
+.lp-brand{font-weight:700;font-size:1.1rem;color:var(--lp-text);text-decoration:none;
+  display:flex;align-items:center;gap:.5rem}
+.lp-brand-dot{width:.7rem;height:.7rem;border-radius:9999px;background:var(--lp-brand);display:inline-block}
+.lp-nav-links{display:flex;list-style:none;margin:0;padding:0;gap:1.25rem;align-items:center;flex-wrap:wrap}
+.lp-nav-links a{color:var(--lp-muted);text-decoration:none;font-size:.95rem}
+.lp-nav-links a:hover{color:var(--lp-text)}
+.lp-nav-actions{display:flex;gap:.6rem;align-items:center}
+@media (max-width:40rem){
+  .lp-nav-links{display:none;width:100%;flex-direction:column;align-items:flex-start;
+    padding:.75rem 0 .25rem}
+  .lp-nav-links.active{display:flex}
+}
+.lp-theme-toggle{background:var(--lp-surface);border:1px solid var(--lp-border);
+  color:var(--lp-text);border-radius:9999px;padding:.4rem .6rem;cursor:pointer;font-size:1rem;line-height:1}
+.btn{display:inline-block;border-radius:.6rem;padding:.65rem 1.2rem;text-decoration:none;
+  font-weight:600;font-size:.95rem;transition:transform .2s ease,box-shadow .2s ease}
+.btn-primary{background:var(--lp-btn-bg);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--lp-brand) 35%,transparent)}
+.btn-ghost{border:1px solid var(--lp-border);color:var(--lp-text);background:transparent}
+.btn-hero-secondary{border:1px solid var(--lp-hero-muted);color:var(--lp-hero-text);background:transparent}
+.lp-hero{background:var(--lp-hero);color:var(--lp-hero-text);padding:4.5rem 1.25rem 4rem;text-align:center}
+.lp-hero-inner{max-width:52rem;margin:0 auto}
+.lp-eyebrow{display:inline-block;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--lp-brand);font-weight:700;margin-bottom:1rem}
+.lp-hero h1{font-size:clamp(1.9rem,4.5vw,3rem);line-height:1.15;margin:0 0 1rem}
+.lp-hero .lp-sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--lp-hero-muted);margin:0 auto 2rem;max-width:40rem}
+.lp-hero-cta{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+.lp-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1rem;
+  max-width:64rem;margin:-2rem auto 0;padding:0 1.25rem;position:relative}
+.lp-metric{background:var(--lp-surface);border:1px solid var(--lp-border);border-radius:1rem;
+  padding:1.2rem 1rem;text-align:center;box-shadow:var(--lp-shadow)}
+.lp-metric-value{font-size:1.6rem;font-weight:800;color:var(--lp-brand)}
+.lp-metric-label{font-size:.85rem;color:var(--lp-muted)}
+.lp-section{max-width:68rem;margin:0 auto;padding:3.5rem 1.25rem}
+.lp-section-head{text-align:center;max-width:44rem;margin:0 auto 2.5rem}
+.lp-section-head h2{font-size:clamp(1.5rem,3vw,2.1rem);margin:0 0 .6rem}
+.lp-section-head p{color:var(--lp-muted);margin:0}
+.lp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1.2rem}
+.lp-card{background:var(--lp-surface);border:1px solid var(--lp-border);border-radius:1rem;
+  padding:1.5rem;box-shadow:var(--lp-shadow)}
+.lp-card h3{margin:.6rem 0 .4rem;font-size:1.05rem}
+.lp-card p{margin:0;color:var(--lp-muted);font-size:.95rem}
+.lp-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.lp-chip{font-size:.78rem;font-weight:700;border-radius:9999px;padding:.2rem .7rem;
+  background:color-mix(in srgb,var(--lp-brand) 14%,transparent);color:var(--lp-chip-fg)}
+.lp-faq details{background:var(--lp-surface);border:1px solid var(--lp-border);border-radius:.8rem;
+  padding:.4rem 1.1rem;margin-bottom:.7rem}
+.lp-faq summary{cursor:pointer;font-weight:600;padding:.6rem 0}
+.lp-faq details p{margin:0 0 .8rem;color:var(--lp-muted)}
+.lp-final-cta{background:var(--lp-hero);color:var(--lp-hero-text);text-align:center;
+  border-radius:1.2rem;padding:3rem 1.5rem;margin:1rem auto 3rem;max-width:68rem}
+.lp-final-cta h2{margin:0 0 .6rem;font-size:clamp(1.4rem,3vw,2rem)}
+.lp-final-cta p{color:var(--lp-hero-muted);margin:0 auto 1.5rem;max-width:36rem}
+footer[role="contentinfo"]{border-top:1px solid var(--lp-border);color:var(--lp-muted);
+  font-size:.85rem;text-align:center;padding:1.6rem 1.25rem}
+footer[role="contentinfo"] a{color:var(--lp-muted)}
+.lp-footer-links{display:flex;gap:1.1rem;justify-content:center;flex-wrap:wrap;margin-top:.5rem}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+  html{scroll-behavior:auto}
+}
+</style>
+    <style>/* ═══ PageBuilder Animations — Base ═══ */
+html{scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:border-box}
+:focus-visible{outline:2px solid currentColor;outline-offset:2px;transition:outline-offset .2s}
+::selection{background:rgba(99,102,241,.3)}
+:root{--anim-primary:#6366f1;--anim-accent:#a855f7;--anim-glow:rgba(99,102,241,.3);--anim-ease:cubic-bezier(.4,0,.2,1)}
+/* ═══ Minimal Tier ═══ */
+.anim-hover-lift{transition:transform .3s var(--anim-ease),box-shadow .3s ease}
+.anim-hover-lift:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.1)}
+.anim-hover-glow{transition:border-color .3s ease,box-shadow .3s ease}
+.anim-hover-glow:hover{border-color:currentColor;box-shadow:0 0 20px var(--anim-glow)}
+.anim-hover-opacity{transition:opacity .3s ease}
+.anim-hover-opacity:hover{opacity:.8}
+.anim-hover-scale{transition:transform .3s var(--anim-ease)}
+.anim-hover-scale:hover{transform:scale(1.05)}
+.anim-btn-pulse{transition:transform .2s var(--anim-ease),box-shadow .2s ease}
+.anim-btn-pulse:active{transform:scale(.97)}
+.anim-underline{position:relative;text-decoration:none}
+.anim-underline::after{content:'';position:absolute;bottom:-2px;left:50%;width:0;height:2px;background:currentColor;transition:all .3s var(--anim-ease);transform:translateX(-50%)}
+.anim-underline:hover::after{width:100%}
+.anim-border-draw{position:relative}
+.anim-border-draw::before{content:'';position:absolute;top:0;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--anim-primary),var(--anim-accent));transition:width .3s ease}
+.anim-border-draw:hover::before{width:100%}
+/* ═══ Standard Tier ═══ */
+
+/* ── Scroll-Triggered Reveals ── */
+[data-anim]{opacity:0;transform:translateY(24px);transition:opacity .7s var(--anim-ease),transform .7s var(--anim-ease)}
+[data-anim].anim-visible{opacity:1;transform:translateY(0)}
+[data-anim=slide-left]{transform:translateX(-30px)}
+[data-anim=slide-left].anim-visible{transform:translateX(0)}
+[data-anim=slide-right]{transform:translateX(30px)}
+[data-anim=slide-right].anim-visible{transform:translateX(0)}
+[data-anim=scale-in]{transform:scale(.92)}
+[data-anim=scale-in].anim-visible{transform:scale(1)}
+[data-anim=stagger]{opacity:1;transform:none}
+.anim-stagger-child{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
+.anim-stagger-child.anim-visible{opacity:1;transform:translateY(0)}
+.anim-delay-1{transition-delay:.1s!important;animation-delay:.1s!important}
+.anim-delay-2{transition-delay:.2s!important;animation-delay:.2s!important}
+.anim-delay-3{transition-delay:.3s!important;animation-delay:.3s!important}
+.anim-delay-4{transition-delay:.4s!important;animation-delay:.4s!important}
+.anim-delay-5{transition-delay:.5s!important;animation-delay:.5s!important}
+.anim-delay-6{transition-delay:.6s!important;animation-delay:.6s!important}
+.anim-delay-7{transition-delay:.7s!important;animation-delay:.7s!important}
+.anim-delay-8{transition-delay:.8s!important;animation-delay:.8s!important}
+
+/* ── Text & Typography ── */
+.anim-gradient-text{background:linear-gradient(135deg,var(--anim-primary),var(--anim-accent),#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:textGradient 4s ease infinite}
+@keyframes textGradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.anim-gradient-shift{background-size:200% 200%;animation:gradientShift 6s ease infinite}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* ── Entrance Keyframes ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.anim-fade-in{animation:fadeIn .6s ease forwards}
+.anim-fade-in-up{animation:fadeInUp .8s var(--anim-ease) forwards}
+.anim-fade-in-scale{animation:fadeInScale .6s var(--anim-ease) forwards}
+
+/* ── Counter / Stats ── */
+@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.anim-count-up{animation:countUp .6s ease forwards}
+
+/* ── Infinite Ambient ── */
+@keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.anim-gradient-flow{background:linear-gradient(-45deg,#ee7752,#e73c7e,#23a6d5,#23d5ab);background-size:400% 400%;animation:gradientFlow 15s ease infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.anim-float{animation:float 3s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px var(--anim-glow)}50%{box-shadow:0 0 25px var(--anim-glow)}}
+.anim-pulse-glow{animation:pulseGlow 2s ease-in-out infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.anim-shimmer{background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.06) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 2s ease-in-out infinite}
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.anim-slide-down{animation:slideDown .3s ease forwards}
+@keyframes expandIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.anim-expand-in{transform-origin:left;animation:expandIn .6s var(--anim-ease) forwards}
+
+.anim-noise::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat}
+@media (prefers-reduced-motion:reduce){
+*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+[data-anim]{opacity:1!important;transform:none!important}
+.anim-stagger-child{opacity:1!important;transform:none!important}
+.anim-noise::after{display:none!important}
+.cursor-dot,.cursor-ring,.anim-particle,.anim-particle-system{display:none!important}
+.gsap-hero-badge,.gsap-hero-title,.gsap-hero-sub,.gsap-hero-cta,.gsap-stagger-item,.gsap-count,.gsap-reveal{opacity:1!important;transform:none!important}
+.anim-3d-tilt{transform:none!important}
+.anim-glitch{animation:none!important}
+.anim-marquee{animation:none!important}
+.anim-float,.anim-blob,.anim-gradient-flow,.anim-shimmer,.anim-pulse-glow,.anim-typewriter,.anim-wave-text,.anim-text-reveal{animation:none!important}
+.scroll-snap-container{scroll-snap-type:none!important}
+.anim-reveal-clip{clip-path:none!important}
+}</style>
+</head>
+<body>
+    <!-- Skip navigation for accessibility -->
+    <a href="#main-content" class="skip-nav" style="position:absolute;left:-9999px;top:0;z-index:999;padding:10px;background:#fff;border:2px solid #333;">Skip to main content</a>
+
+    <header role="banner">
+        <nav role="navigation" aria-label="Main navigation">
+            <div class="lp-nav">
+      <a class="lp-brand" href="/"><span class="lp-brand-dot" aria-hidden="true"></span>Vertical Spine Kit</a>
+      <button class="anim-burger" data-target="#lp-nav-links" aria-label="Toggle navigation menu" aria-expanded="false">&#9776;</button>
+      <ul class="lp-nav-links" id="lp-nav-links">
+        <li><a href="#benefits">Benefits</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+      </ul>
+      <div class="lp-nav-actions">
+        <button class="lp-theme-toggle" data-lp-theme-toggle aria-label="Toggle dark mode" type="button">&#9789;</button>
+        <a class="btn btn-ghost" href="/login">Sign in</a>
+        <a class="btn btn-primary" href="/register">Start free</a>
+      </div>
+    </div>
+        </nav>
+    </header>
+
+    <main id="main-content" role="main">
+        <article>
+            <div class="lp-hero"><div class="lp-hero-inner"><h1>Voice AI for Local Business</h1><p class="lp-sub">Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.</p><div class="lp-hero-cta"><a class="btn btn-primary anim-btn-pulse" href="/register">Start free &mdash; no card required</a><a class="btn btn-hero-secondary" href="/pricing">See pricing</a></div></div></div>
+            <section class="lp-metrics" aria-label="Key results"><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">99.9%</div><div class="lp-metric-label">Uptime SLA</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">&lt;2s</div><div class="lp-metric-label">Avg Response</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">50+</div><div class="lp-metric-label">Languages</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">\.10</div><div class="lp-metric-label">Per Min</div></div></section>
+<section class="lp-section" id="benefits" aria-labelledby="lp-benefits-h">
+  <div class="lp-section-head">
+    <h2 id="lp-benefits-h">Why operators switch</h2>
+    <p>Time back in your week and money kept in your account &mdash; the two things every saas owner wants more of.</p>
+  </div>
+  <div class="lp-grid"><div class="lp-card anim-hover-lift"><h3>24/7 Call Coverage</h3><p>Never miss a call again. Our AI voice agent answers instantly, qualifies leads, and books appointments.</p><div class="lp-chips"><span class="lp-chip">15 hrs/week</span><span class="lp-chip">\,200/mo</span></div></div><div class="lp-card anim-hover-lift"><h3>Per-Tenant Knowledge Base</h3><p>Each business gets its own RAG-powered knowledge base. Ingest services, pricing, FAQs in minutes.</p><div class="lp-chips"><span class="lp-chip">10 hrs/week</span><span class="lp-chip">\,500/mo</span></div></div><div class="lp-card anim-hover-lift"><h3>TCPA/GDPR Compliant</h3><p>Immutable consent audit logs, automatic recording purge, PII encryption at rest. Built for compliance.</p><div class="lp-chips"><span class="lp-chip">5 hrs/week</span><span class="lp-chip">\/mo</span></div></div></div>
+</section>
+<section class="lp-section" id="features" aria-labelledby="lp-features-h">
+  <div class="lp-section-head">
+    <h2 id="lp-features-h">Everything you need to run the business</h2>
+    <p>Built for how saas businesses actually work.</p>
+  </div>
+  <div class="lp-grid"><div class="lp-card anim-hover-lift"><h3>Voice Webhook</h3><p>Twilio-native webhook handling with consent flow, speech gathering, and TwiML responses</p></div><div class="lp-card anim-hover-lift"><h3>Intent Extraction</h3><p>LLM + keyword fallback extracts service, datetime, address, callback from speech</p></div><div class="lp-card anim-hover-lift"><h3>Per-Tenant RAG</h3><p>Chroma + sentence-transformers for instant, accurate answers from your content</p></div><div class="lp-card anim-hover-lift"><h3>Entitlement Gating</h3><p>Tier gate (Starter+) + EntitlementsService grants from Stripe webhooks</p></div><div class="lp-card anim-hover-lift"><h3>Voice-Minute Metering</h3><p>Per-call billing via shared.billing.BillingService with usage API</p></div><div class="lp-card anim-hover-lift"><h3>Immutable Consent</h3><p>Hash-chained audit log via shared.audit.ImmutableAuditLog for TCPA/GDPR</p></div><div class="lp-card anim-hover-lift"><h3>Multi-Provider Billing</h3><p>Stripe, Lemon Squeezy, Paddle via shared.billing.UnifiedPaymentService</p></div><div class="lp-card anim-hover-lift"><h3>Dark/Light Theme</h3><p>CSS variables + localStorage persistence, respects prefers-color-scheme</p></div></div>
+</section>
+<section class="lp-section lp-faq" id="faq" aria-labelledby="lp-faq-h">
+  <div class="lp-section-head">
+    <h2 id="lp-faq-h">Frequently asked questions</h2>
+  </div>
+  <details><summary>How does the voice agent work?</summary><p>When a customer calls your Twilio number, our webhook handles the call: plays a consent prompt, gathers speech, extracts intent using LLM, queries your knowledge base, and responds with a natural-sounding answer.</p></details><details><summary>Can I customize the knowledge base?</summary><p>Yes! Ingest services (JSON), pricing (CSV), and FAQs (Markdown) per tenant. The RAG system retrieves the top-3 most relevant chunks for every query.</p></details><details><summary>What tiers are supported?</summary><p>Voice agent requires Starter+ tier. Free tier is denied with a friendly message. Upgrade via Stripe checkout or subscription - entitlements are granted automatically via webhook.</p></details><details><summary>Is it compliant?</summary><p>Yes. Consent is captured and written to an immutable hash-chained audit log. Recordings are purged after 30 days. PII (phone, address) is encrypted at rest.</p></details><details><summary>How much does it cost?</summary><p>Starter: \/mo + \.10/min voice. Pro: \/mo + \.08/min. Agency: \/mo + \.06/min. No setup fees.</p></details>
+</section>
+<section class="lp-final-cta" aria-labelledby="lp-cta-h">
+  <h2 id="lp-cta-h">Run your saas on Vertical Spine Kit</h2>
+  <p>Join owners who replaced scattered tools with one platform.</p>
+  <a class="btn btn-primary anim-btn-pulse" href="/register">Create your account</a>
+</section>
+        </article>
+    </main>
+
+    <footer role="contentinfo">
+        <div>
+      <span>Vertical Spine Kit &mdash; SaaS</span>
+      <nav class="lp-footer-links" aria-label="Footer">
+        <a href="/pricing">Pricing</a>
+        <a href="/login">Sign in</a>
+        <a href="/register">Start free</a>
+        <a href="/support">Support</a>
+      </nav>
+    </div>
+    </footer>
+
+    
+    <script>
+(function(){
+'use strict';
+var SD = 0.08;
+var TH = 0.15;
+var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+// ── Scroll Progress Bar ──
+(function(){
+var pb = document.querySelector('.anim-scroll-progress');
+if(pb && !REDUCE) {
+  var ticking = false;
+  window.addEventListener('scroll',function(){
+    if(!ticking) { requestAnimationFrame(function(){
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      pb.style.transform = 'scaleX(' + Math.min(window.scrollY / Math.max(h,1), 1) + ')';
+      ticking = false;
+    }); ticking = true; }
+  },{passive:true});
+}
+})();
+
+// ── IntersectionObserver for Reveals ──
+(function(){
+var obs = new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(!entry.isIntersecting) return;
+    var el = entry.target;
+    var anim = el.getAttribute('data-anim');
+    if(anim === 'stagger') {
+      var kids = el.children;
+      for(var i=0;i<kids.length;i++) { (function(idx){
+        setTimeout(function(){ kids[idx].classList.add('anim-visible'); }, idx * SD);
+      })(i); }
+    } else if(anim === 'grid-reveal') {
+      el.classList.add('anim-visible');
+      var kids = el.children;
+      for(var i=0;i<kids.length;i++) { (function(idx){
+        setTimeout(function(){ kids[idx].style.transitionDelay = (idx * SD)+'s'; kids[idx].classList.add('anim-visible'); }, 50);
+      })(i); }
+    }
+    el.classList.add('anim-visible');
+    if(anim !== 'keep') obs.unobserve(el);
+  });
+},{threshold:TH});
+
+// Stagger parents
+document.querySelectorAll('[data-anim="stagger"]').forEach(function(p){
+  Array.from(p.children).forEach(function(c){ c.classList.add('anim-stagger-child'); obs.observe(c); });
+});
+
+// Grid reveals
+document.querySelectorAll('[data-anim="grid-reveal"]').forEach(function(g){ obs.observe(g); });
+
+// Direct anim elements
+document.querySelectorAll('[data-anim]:not([data-anim="stagger"]):not([data-anim="grid-reveal"])').forEach(function(el){
+  obs.observe(el);
+});
+
+// Stats
+document.querySelectorAll('.anim-stat').forEach(function(el){ obs.observe(el); });
+document.querySelectorAll('.anim-reveal-image').forEach(function(el){ obs.observe(el); });
+})();
+
+// ── Counter-Up ──
+(function(){
+if(REDUCE) return;
+var co = new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(!entry.isIntersecting) return;
+    var el = entry.target;
+    var t = parseInt(el.getAttribute('data-target')||el.textContent.replace(/[^0-9]/g,''),10);
+    if(!t) { co.unobserve(el); return; }
+    var c = 0, st = Math.ceil(t / (1500/16));
+    var tm = setInterval(function(){
+      c += st; if(c>=t) { c=t; clearInterval(tm); }
+      el.textContent = c.toLocaleString();
+    },16);
+    co.unobserve(el);
+  });
+},{threshold:0.3});
+document.querySelectorAll('.anim-count-up,.anim-stat-value').forEach(function(el){ co.observe(el); });
+})();
+}());
+</script>
+<script>
+(function(){
+  var KEY='lp-theme';
+  try{var saved=localStorage.getItem(KEY);
+    if(saved==='dark'||saved==='light'){document.documentElement.setAttribute('data-theme',saved);}
+  }catch(e){}
+  document.querySelectorAll('[data-lp-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var next=dark?'light':'dark';
+      document.documentElement.setAttribute('data-theme',next);
+      try{localStorage.setItem(KEY,next);}catch(e){}
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-"""Tests for vertical-spine-kit license keys (#5)."""
+"""Tests for callagent license keys (#5)."""
 
 import os
 
@@ -22,7 +22,7 @@ def license_store(tmp_path):
 
 class TestLicenseService:
     def test_mint_and_verify(self, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
 
         svc = LicenseService()
         info = svc.mint(holder="Acme Corp")
@@ -34,7 +34,7 @@ class TestLicenseService:
         assert out.holder == "Acme Corp"
 
     def test_verify_invalid_key(self, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
         from shared.digital_products import LicenseError
 
         svc = LicenseService()
@@ -42,7 +42,7 @@ class TestLicenseService:
             svc.verify("VSK-AAAA-BBBB-CCCC-DDDD")  # bad signature
 
     def test_list_and_stats(self, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
 
         svc = LicenseService()
         svc.mint(holder="A")
@@ -53,7 +53,7 @@ class TestLicenseService:
         assert len(keys) == 2
 
     def test_revoke(self, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
         from shared.digital_products import LicenseError
 
         svc = LicenseService()
@@ -120,7 +120,7 @@ class TestLicenseMiddleware:
         assert "license" in r.json()["detail"].lower()
 
     def test_validate_with_valid_license(self, client: TestClient, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
 
         svc = LicenseService()
         info = svc.mint(holder="Acme Corp")
@@ -141,7 +141,7 @@ class TestLicenseMiddleware:
         assert r.status_code == 401
 
     def test_validate_with_revoked_license(self, client: TestClient, license_store):
-        from services.license_service import LicenseService
+        from shared.digital_products import LicenseService
 
         svc = LicenseService()
         info = svc.mint(holder="Revoked Corp")
