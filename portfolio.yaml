@@ -1,0 +1,12 @@
+name: callagent
+family: ai-agent-platform
+buyer: Customer support teams / small businesses
+spine_services:
+  - shared.auth
+  - shared.billing
+surface_only: false
+distinct_buyer: true
+data_asset: Customer support tickets / conversation history
+status: Development
+verdict: KEEP
+parent: null

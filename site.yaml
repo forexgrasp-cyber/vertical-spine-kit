@@ -1,0 +1,24 @@
+﻿slug: callagent
+host: callagent.snapford.com
+port: 8000
+class: product
+image: callagent:latest
+service_name: app
+container_name: callagent
+health_path: /health
+family: ai-agent-platform
+buyer: Customer support teams / small businesses
+data_asset: Customer support tickets / conversation history
+cert: wildcard
+priority: 30
+rate_limit: 100
+rate_burst: 50
+data_mount: /app/data
+app_networks:
+  - web
+  - internal
+app_environment: |
+  DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/callagent
+  REDIS_URL=redis://redis:6379/0
+  SITE_URL=https://callagent.snapford.com
+  ENVIRONMENT=production
