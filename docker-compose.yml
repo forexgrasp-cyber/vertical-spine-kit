@@ -50,10 +50,10 @@ services:
       - traefik.http.routers.callagent-web-insecure.service=callagent-app
       - traefik.http.middlewares.redirect-callagent.redirectscheme.scheme=https
     environment:
-      DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/callagent
-      REDIS_URL=redis://redis:6379/0
-      SITE_URL=https://callagent.snapford.com
-      ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/callagent
+      - REDIS_URL=redis://redis:6379/0
+      - SITE_URL=https://callagent.snapford.com
+      - ENVIRONMENT=production
     healthcheck:
       # Host header = the public host (TRUSTED_HOSTS rejects a bare
       # 127.0.0.1 Host with 400) and X-Forwarded-Proto: https (the production
