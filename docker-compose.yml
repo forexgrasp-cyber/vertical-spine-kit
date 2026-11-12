@@ -74,7 +74,5 @@ services:
 volumes:
   app-data: null
 networks:
-  web:
-    external: true
-    name: web
-  internal: {}
+  web: {external: true, name: web}
+  internal:
