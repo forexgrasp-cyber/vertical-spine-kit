@@ -32,25 +32,35 @@ services:
       # Wildcard certificate: one cert for the whole *.snapford.com
       # zone instead of one per host (LE issues 50 certs/week).
       - traefik.http.routers.callagent-web.tls.domains[0].main=*.snapford.com
-      # `gate` and `redirect` are owned by the edge (infra-edge);
-      # only the rate limit is product-specific.
-      - traefik.http.routers.callagent-web.middlewares=gate,ratelimit-callagent
+      # Self-owned middlewares (estate convention): gate-<slug>
+      # allow-all ipallowlist (the edge fronts with Cloudflare) + the
+      # http->https redirect. Never reference a bare `gate`/`redirect` -
+      # nothing defines those, a dangling reference disables this router
+      # and the tools wildcard (priority 1) answers the host instead.
+      - traefik.http.routers.callagent-web.middlewares=gate-callagent,ratelimit-callagent
       - traefik.http.services.callagent-app.loadbalancer.server.port=8000
+      - traefik.http.middlewares.gate-callagent.ipallowlist.sourcerange=0.0.0.0/0,::/0
       - traefik.http.middlewares.ratelimit-callagent.ratelimit.average=100
       - traefik.http.middlewares.ratelimit-callagent.ratelimit.burst=50
-      # http -> https: the edge-owned `redirect` middleware.
+      # http -> https.
       - traefik.http.routers.callagent-web-insecure.rule=Host(`${TRAEFIK_HOST:-callagent.snapford.com}`)
       - traefik.http.routers.callagent-web-insecure.priority=30
       - traefik.http.routers.callagent-web-insecure.entrypoints=web
-      - traefik.http.routers.callagent-web-insecure.middlewares=redirect
+      - traefik.http.routers.callagent-web-insecure.middlewares=redirect-callagent
       - traefik.http.routers.callagent-web-insecure.service=callagent-app
+      - traefik.http.middlewares.redirect-callagent.redirectscheme.scheme=https
     environment:
       DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/callagent
       REDIS_URL=redis://redis:6379/0
       SITE_URL=https://callagent.snapford.com
       ENVIRONMENT=production
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      # Host header = the public host (TRUSTED_HOSTS rejects a bare
+      # 127.0.0.1 Host with 400) and X-Forwarded-Proto: https (the production
+      # HTTPSRedirectMiddleware 307s plain http - the probe must look like
+      # edge traffic or the container never becomes healthy, and Traefik v3
+      # skips unhealthy/starting containers, hiding the router entirely).
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/health', headers={'Host': '${TRAEFIK_HOST:-callagent.snapford.com}', 'X-Forwarded-Proto': 'https'}), timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
