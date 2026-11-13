@@ -1,4 +1,4 @@
-
+try {
 (function(){
 'use strict';
 // Seamless loop: duplicate the track content once so translateX(-50%) wraps perfectly.
@@ -8,8 +8,8 @@ document.querySelectorAll('.anim-marquee-track').forEach(function(track){
   track.innerHTML += track.innerHTML;
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -38,8 +38,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.4});
 document.querySelectorAll('.anim-count[data-count]').forEach(function(el){ io.observe(el); });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -58,8 +58,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.2, rootMargin: '0px 0px -8% 0px'});
 els.forEach(function(el){ io.observe(el); });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -90,8 +90,8 @@ document.querySelectorAll('[data-cursor]').forEach(function(el){
   el.addEventListener('mouseleave', function(){ cursor.classList.remove('is-label'); });
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -113,8 +113,8 @@ window.addEventListener('scroll', function(){
 }, {passive:true});
 update();
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -132,8 +132,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.15, rootMargin: '0px 0px -6% 0px'});
 groups.forEach(function(g){ io.observe(g); });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -163,8 +163,8 @@ document.querySelectorAll('[data-split-init],[data-scrub-init]').forEach(functio
   );
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -180,8 +180,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.25});
 els.forEach(function(el){ io.observe(el); });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -208,8 +208,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.3});
 els.forEach(function(el){ io.observe(el); });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -238,8 +238,8 @@ document.querySelectorAll('[data-scroll-read]').forEach(function(el){
   update();
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -258,10 +258,8 @@ document.querySelectorAll('.anim-tilt-scene').forEach(function(scene){
   });
 });
 }());
-
-
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 gsap.registerPlugin(ScrollTrigger);
@@ -340,8 +338,8 @@ gsap.utils.toArray('[data-horizontal-scroll]').forEach(function(el){
   });
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
@@ -445,8 +443,8 @@ gsap.utils.toArray('.anim-gradient-shift').forEach(function(el){
   });
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var SD = 0.08;
@@ -530,8 +528,8 @@ var co = new IntersectionObserver(function(entries){
 document.querySelectorAll('.anim-count-up,.anim-stat-value').forEach(function(el){ co.observe(el); });
 })();
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -675,8 +673,8 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a){
 });
 })();
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -721,8 +719,8 @@ document.querySelectorAll('.anim-story').forEach(function(story){
   });
 });
 }());
-
-
+} catch (e) { /* isolated animation feature */ }
+try {
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -748,3 +746,4 @@ update();
 window.addEventListener('scroll', update, {passive:true});
 window.addEventListener('resize', update, {passive:true});
 }());
+} catch (e) { /* isolated animation feature */ }
