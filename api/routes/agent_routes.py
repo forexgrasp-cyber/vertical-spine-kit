@@ -11,6 +11,9 @@ Endpoints:
   POST  /agent/{tenant_id}/billing/subscribe - Subscribe to voice agent plan
   GET   /agent/{tenant_id}/billing/usage     - Voice-minute usage + cost
   GET   /agent/{tenant_id}/billing/tier      - Current tier + access check
+  POST  /agent/{tenant_id}/webhooks/retell/call   - Retell missed-call webhook
+  POST  /agent/{tenant_id}/webhooks/vapi/call     - Vapi missed-call webhook
+  POST  /agent/{tenant_id}/webhooks/bland/call    - Bland missed-call webhook
 """
 
 from __future__ import annotations
@@ -30,6 +33,22 @@ from services.calls_db import (
     list_calls as list_tenant_calls,
 )
 from services.voice_agent import handle_voice_webhook
+
+# ── shared.missed_lead (W1-b.1) ──────────────────────────────────────────
+_HAS_MISSED_LEAD = False
+try:  # noqa: SIM105
+    from shared.missed_lead.service import get_missed_lead_service
+    from shared.missed_lead.webhooks import (
+        RetellWebhookAdapter,
+        VapiWebhookAdapter,
+        BlandWebhookAdapter,
+    )
+    from shared.missed_lead.responder import WhatsAppLeadResponder
+    from shared.missed_lead.trade import LOCKSMITH_PROFILE
+    from shared.booking.service import BookingService as SharedBookingService
+    _HAS_MISSED_LEAD = True
+except Exception:  # noqa: BLE001
+    _HAS_MISSED_LEAD = False
 
 router = APIRouter(tags=["Voice Agent"])
 
@@ -175,16 +194,6 @@ async def agent_webhook(
     request: Request,
     tenant_id: str = PathParam(..., description="Tenant identifier"),
 ):
-    """Twilio voice webhook. Returns TwiML XML.
-
-    Twilio POSTs here on every inbound call leg. The `step` query param
-    drives the consent -> input -> response state machine.
-    """
-    return await handle_voice_webhook(
-        tenant_id=tenant_id,
-        request=request,
-        base_url=BASE_URL,
-    )
     """Twilio voice webhook. Returns TwiML XML.
 
     Twilio POSTs here on every inbound call leg. The `step` query param
@@ -497,6 +506,193 @@ async def billing_webhook(
                 pass
 
     return {"status": "ok", "provider": provider, "data": result.data}
+
+
+# ── Missed-lead webhooks (W1-b.1) ──────────────────────────────────────
+
+# Per-tenant MissedLeadService cache (wired with shared.booking for real writes)
+_missed_lead_services: dict[str, Any] = {}
+
+
+def _get_missed_lead_service(tenant_id: str) -> Any | None:
+    """Get or create a MissedLeadService for a tenant, wired with BookingService and WhatsApp responder."""
+    if not _HAS_MISSED_LEAD:
+        return None
+    if tenant_id in _missed_lead_services:
+        return _missed_lead_services[tenant_id]
+    # Wire BookingService for real appointment writes (W1-b.3)
+    booking_svc = SharedBookingService(
+        db_path=os.environ.get("BOOKING_DB", "data/bookings.db"),
+        tenant_id=tenant_id,
+        in_memory=os.environ.get("BOOKING_IN_MEMORY", "false").lower() == "true",
+    )
+    # Wire WhatsApp responder for auto-recovery messages (W1-b.1 WhatsApp recovery)
+    whatsapp_responder = None
+    if os.environ.get("WHATSAPP_PHONE_NUMBER_ID") and os.environ.get("WHATSAPP_ACCESS_TOKEN"):
+        try:
+            whatsapp_responder = WhatsAppLeadResponder.from_env(
+                tenant_id=tenant_id,
+                dry_run=os.environ.get("MISSED_LEAD_DRY_RUN", "false").lower() == "true",
+            )
+        except Exception:  # noqa: BLE001 - responder optional
+            whatsapp_responder = None
+    svc = get_missed_lead_service(
+        tenant_id=tenant_id,
+        profile=LOCKSMITH_PROFILE,
+        booking_service=booking_svc,
+        responder=whatsapp_responder,
+        dry_run=os.environ.get("MISSED_LEAD_DRY_RUN", "false").lower() == "true",
+    )
+    _missed_lead_services[tenant_id] = svc
+    return svc
+
+
+# Dynamic per-tenant missed-call webhook endpoints
+# These accept provider webhooks and route to the tenant's MissedLeadService
+
+class MissedCallWebhookRequest(BaseModel):
+    """Generic request model for provider webhook payloads."""
+    pass
+
+
+@router.post("/{tenant_id}/webhooks/retell/call")
+async def retell_missed_call_webhook(
+    tenant_id: str = PathParam(..., description="Tenant identifier"),
+    payload: dict[str, Any] = Body(...),
+):
+    """Retell.ai missed-call webhook. Feeds shared.missed_lead recovery flow."""
+    if not _HAS_MISSED_LEAD:
+        raise HTTPException(status_code=503, detail="Missed-lead service not available")
+    svc = _get_missed_lead_service(tenant_id)
+    if svc is None:
+        raise HTTPException(status_code=503, detail="Missed-lead service not configured")
+    adapter = RetellWebhookAdapter(svc)
+    result = await adapter.handle(payload)
+    duplicate = getattr(result, "metadata", {}).get("duplicate", False) if hasattr(result, "metadata") else False
+    return {
+        "ok": bool(getattr(result, "success", False)),
+        "duplicate": duplicate,
+        "lead_id": str(getattr(getattr(result, "data", None), "id", "") or ""),
+    }
+
+
+@router.post("/{tenant_id}/webhooks/vapi/call")
+async def vapi_missed_call_webhook(
+    tenant_id: str = PathParam(..., description="Tenant identifier"),
+    payload: dict[str, Any] = Body(...),
+):
+    """Vapi.ai missed-call webhook. Feeds shared.missed_lead recovery flow."""
+    if not _HAS_MISSED_LEAD:
+        raise HTTPException(status_code=503, detail="Missed-lead service not available")
+    svc = _get_missed_lead_service(tenant_id)
+    if svc is None:
+        raise HTTPException(status_code=503, detail="Missed-lead service not configured")
+    adapter = VapiWebhookAdapter(svc)
+    result = await adapter.handle(payload)
+    duplicate = getattr(result, "metadata", {}).get("duplicate", False) if hasattr(result, "metadata") else False
+    return {
+        "ok": bool(getattr(result, "success", False)),
+        "duplicate": duplicate,
+        "lead_id": str(getattr(getattr(result, "data", None), "id", "") or ""),
+    }
+
+
+@router.post("/{tenant_id}/webhooks/bland/call")
+async def bland_missed_call_webhook(
+    tenant_id: str = PathParam(..., description="Tenant identifier"),
+    payload: dict[str, Any] = Body(...),
+):
+    """Bland.ai missed-call webhook. Feeds shared.missed_lead recovery flow."""
+    if not _HAS_MISSED_LEAD:
+        raise HTTPException(status_code=503, detail="Missed-lead service not available")
+    svc = _get_missed_lead_service(tenant_id)
+    if svc is None:
+        raise HTTPException(status_code=503, detail="Missed-lead service not configured")
+    adapter = BlandWebhookAdapter(svc)
+    result = await adapter.handle(payload)
+    duplicate = getattr(result, "metadata", {}).get("duplicate", False) if hasattr(result, "metadata") else False
+    return {
+        "ok": bool(getattr(result, "success", False)),
+        "duplicate": duplicate,
+        "lead_id": str(getattr(getattr(result, "data", None), "id", "") or ""),
+    }
+
+
+@router.post("/{tenant_id}/webhooks/whatsapp/message")
+async def whatsapp_missed_lead_webhook(
+    tenant_id: str = PathParam(..., description="Tenant identifier"),
+    payload: dict[str, Any] = Body(...),
+    request: Request = None,
+):
+    """Meta WhatsApp Cloud webhook for missed-lead reply handling.
+    
+    Feeds inbound WhatsApp replies into shared.missed_lead.handle_reply for
+    qualification and booking. Verifies webhook signature via WhatsAppLeadResponder.
+    """
+    if not _HAS_MISSED_LEAD:
+        raise HTTPException(status_code=503, detail="Missed-lead service not available")
+    svc = _get_missed_lead_service(tenant_id)
+    if svc is None:
+        raise HTTPException(status_code=503, detail="Missed-lead service not configured")
+    
+    # Verify webhook signature if responder has WhatsApp channel
+    if hasattr(svc, '_responder') and svc._responder is not None:
+        responder = svc._responder
+        if hasattr(responder, 'validate_webhook'):
+            body = await request.body()
+            headers = dict(request.headers)
+            if not await responder.validate_webhook(body, headers):
+                raise HTTPException(status_code=401, detail="Invalid WhatsApp webhook signature")
+    
+    # Parse inbound message using responder's parser
+    if hasattr(svc._responder, 'parse_inbound'):
+        try:
+            message = await svc._responder.parse_inbound(payload, dict(request.headers))
+            # Extract caller number and text from parsed message
+            caller_number = getattr(message, 'customer_contact', '') or getattr(message, 'customer_id', '')
+            text = getattr(message, 'content', '') or ''
+            provider_msg_id = getattr(message, 'message_id', None)
+            
+            if caller_number and text:
+                result = await svc.handle_reply(
+                    caller_number=caller_number,
+                    text=text,
+                    provider_message_id=provider_msg_id,
+                )
+                return {
+                    "ok": bool(getattr(result, "success", False)),
+                    "lead_id": str(getattr(getattr(result, "data", None), "id", "") or ""),
+                    "qualified": getattr(getattr(result, "data", None), "status", "") in ("qualified", "booked", "recovered"),
+                }
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=f"WhatsApp message parse failed: {exc}") from exc
+    
+    # Fallback: try to extract from raw payload (WhatsApp Cloud format)
+    try:
+        entry = payload.get("entry", [{}])[0]
+        changes = entry.get("changes", [{}])[0]
+        value = changes.get("value", {})
+        messages = value.get("messages", [])
+        if messages:
+            msg = messages[0]
+            caller_number = msg.get("from", "")
+            text = msg.get("text", {}).get("body", "") if msg.get("type") == "text" else ""
+            provider_msg_id = msg.get("id", "")
+            if caller_number and text:
+                result = await svc.handle_reply(
+                    caller_number=caller_number,
+                    text=text,
+                    provider_message_id=provider_msg_id,
+                )
+                return {
+                    "ok": bool(getattr(result, "success", False)),
+                    "lead_id": str(getattr(getattr(result, "data", None), "id", "") or ""),
+                    "qualified": getattr(getattr(result, "data", None), "status", "") in ("qualified", "booked", "recovered"),
+                }
+    except Exception:
+        pass
+    
+    return {"ok": False, "error": "Could not parse WhatsApp message"}
 
 
 # ── call list (dashboard) ──────────────────────────────────────────────
