@@ -1,4 +1,4 @@
-"""Generate landing animation assets (shared style_engines package). v3-bare-js
+"""Generate landing animation assets (shared style_engines package). v2-bare-js
 
 Writes anim.css + anim.js (BARE js — no <script> wrappers, so it parses as an
 external file) into the framework's static dir, plus brand video + story JSON.
@@ -10,12 +10,9 @@ import sys
 from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent
-# Deterministically find THIS checkout: walking up from a sibling project
-# never passes through shared-canonical-services (projects are siblings, not
-# children), which used to fall through to site-packages -- where an older
-# installed wheel silently shadowed the repo (15 project topics vs 19).
-_CANDIDATES = [APP, *APP.parents, Path(r"C:/Users/IhorLeshchuk/PycharmProjects/shared-canonical-services")]
-SHARED = next((p for p in _CANDIDATES if p.name == "shared-canonical-services"), _CANDIDATES[-1])
+SHARED = APP
+while SHARED.name != "shared-canonical-services" and SHARED.parent != SHARED:
+    SHARED = SHARED.parent
 if str(SHARED) not in sys.path:
     sys.path.insert(0, str(SHARED))
 
