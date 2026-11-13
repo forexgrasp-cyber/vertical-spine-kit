@@ -317,6 +317,20 @@ html{scroll-behavior:smooth}
 .anim-compare-highlight .highlight-bar{position:absolute;top:0;left:0;width:3px;height:100%;background:var(--anim-primary,#6366f1);transform:scaleY(0);transform-origin:top;transition:transform .6s cubic-bezier(.4,0,.2,1)}
 .anim-compare-highlight.anim-visible .highlight-bar{transform:scaleY(1)}
 
+/* ═══ Pinned Storytelling Sections (Premium) ═══ */
+.anim-story{position:relative;overflow:hidden}
+.anim-story-pin{position:relative}
+.anim-story-step{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative}
+.anim-story-step-content{max-width:800px;padding:2rem;opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s cubic-bezier(.4,0,.2,1)}
+.anim-story-step-content.active{opacity:1;transform:translateY(0)}
+.anim-story-progress{position:fixed;left:2rem;top:50%;transform:translateY(-50%);z-index:999;display:flex;flex-direction:column;gap:0;opacity:0;transition:opacity .4s ease;pointer-events:none}
+.anim-story-progress.visible{opacity:1;pointer-events:auto}
+.anim-story-progress-line{width:2px;height:40px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+.anim-story-progress-line::after{content:'';position:absolute;top:0;left:0;width:100%;height:0;background:var(--anim-primary,#6366f1);transition:height .4s ease}
+.anim-story-progress-line.filled::after{height:100%}
+.anim-story-counter{position:fixed;left:2rem;top:calc(50% + 100px);transform:translateY(-50%);font-size:.7rem;color:var(--muted,#64748b);font-weight:600;letter-spacing:.1em;opacity:0;transition:opacity .4s ease}
+.anim-story-counter.visible{opacity:1}
+
 /* ═══ Scroll Progress Ring (Premium — SVG + CSS scroll-driven) ═══ */
 .anim-progress-ring{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;width:48px;height:48px;opacity:0;transition:opacity .3s ease;pointer-events:none}
 .anim-progress-ring.visible{opacity:1;pointer-events:auto}

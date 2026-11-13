@@ -1,4 +1,4 @@
-<script>
+
 (function(){
 'use strict';
 // Seamless loop: duplicate the track content once so translateX(-50%) wraps perfectly.
@@ -8,8 +8,8 @@ document.querySelectorAll('.anim-marquee-track').forEach(function(track){
   track.innerHTML += track.innerHTML;
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -38,8 +38,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.4});
 document.querySelectorAll('.anim-count[data-count]').forEach(function(el){ io.observe(el); });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -58,8 +58,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.2, rootMargin: '0px 0px -8% 0px'});
 els.forEach(function(el){ io.observe(el); });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -90,8 +90,8 @@ document.querySelectorAll('[data-cursor]').forEach(function(el){
   el.addEventListener('mouseleave', function(){ cursor.classList.remove('is-label'); });
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -113,8 +113,8 @@ window.addEventListener('scroll', function(){
 }, {passive:true});
 update();
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -132,8 +132,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.15, rootMargin: '0px 0px -6% 0px'});
 groups.forEach(function(g){ io.observe(g); });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -163,8 +163,8 @@ document.querySelectorAll('[data-split-init],[data-scrub-init]').forEach(functio
   );
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -180,8 +180,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.25});
 els.forEach(function(el){ io.observe(el); });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -208,8 +208,8 @@ var io = new IntersectionObserver(function(entries){
 }, {threshold: 0.3});
 els.forEach(function(el){ io.observe(el); });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -238,8 +238,8 @@ document.querySelectorAll('[data-scroll-read]').forEach(function(el){
   update();
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -258,10 +258,10 @@ document.querySelectorAll('.anim-tilt-scene').forEach(function(scene){
   });
 });
 }());
-</script>
-<script src="https://unpkg.com/gsap@3.12/dist/gsap.min.js"></script>
-<script src="https://unpkg.com/gsap@3.12/dist/ScrollTrigger.min.js"></script>
-<script>
+
+
+
+
 (function(){
 'use strict';
 gsap.registerPlugin(ScrollTrigger);
@@ -340,8 +340,8 @@ gsap.utils.toArray('[data-horizontal-scroll]').forEach(function(el){
   });
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
@@ -445,8 +445,8 @@ gsap.utils.toArray('.anim-gradient-shift').forEach(function(el){
   });
 });
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var SD = 0.08;
@@ -530,8 +530,8 @@ var co = new IntersectionObserver(function(entries){
 document.querySelectorAll('.anim-count-up,.anim-stat-value').forEach(function(el){ co.observe(el); });
 })();
 }());
-</script>
-<script>
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -675,8 +675,54 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a){
 });
 })();
 }());
-</script>
-<script>
+
+
+(function(){
+'use strict';
+var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(REDUCE || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+gsap.registerPlugin(ScrollTrigger);
+
+document.querySelectorAll('.anim-story').forEach(function(story){
+  var steps = story.querySelectorAll('.anim-story-step');
+  var progressContainer = story.querySelector('.anim-story-progress');
+  var counterEl = story.querySelector('.anim-story-counter');
+  var lines = progressContainer ? progressContainer.querySelectorAll('.anim-story-progress-line') : [];
+  if(steps.length < 2) return;
+
+  steps.forEach(function(step, i){
+    var content = step.querySelector('.anim-story-step-content');
+    ScrollTrigger.create({
+      trigger: step,
+      start: 'top 60%',
+      end: 'bottom 40%',
+      onEnter: function(){
+        if(content) content.classList.add('active');
+        lines.forEach(function(l, j){ l.classList.toggle('filled', j <= i); });
+        if(counterEl) counterEl.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(steps.length).padStart(2, '0');
+      },
+      onLeaveBack: function(){
+        if(content) content.classList.remove('active');
+        lines.forEach(function(l, j){ l.classList.toggle('filled', j < i); });
+        if(counterEl && i > 0) counterEl.textContent = String(i).padStart(2, '0') + ' / ' + String(steps.length).padStart(2, '0');
+      }
+    });
+  });
+
+  // Show/hide progress indicator
+  ScrollTrigger.create({
+    trigger: story,
+    start: 'top 80%',
+    end: 'bottom 20%',
+    onToggle: function(self){
+      if(progressContainer) progressContainer.classList.toggle('visible', self.isActive);
+      if(counterEl) counterEl.classList.toggle('visible', self.isActive);
+    }
+  });
+});
+}());
+
+
 (function(){
 'use strict';
 var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -702,4 +748,3 @@ update();
 window.addEventListener('scroll', update, {passive:true});
 window.addEventListener('resize', update, {passive:true});
 }());
-</script>

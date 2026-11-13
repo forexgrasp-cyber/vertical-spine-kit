@@ -8,8 +8,9 @@ Tables (auto-created on import):
   voice_kb_ingest   - per-tenant KB ingest job audit log
   user_tenants      - user_id -> tenant_id ownership mapping
 
-Storage: SQLite by default (data/voice_agent.db); DATABASE_URL override for
-Postgres production. All tables carry tenant_id for row-level isolation.
+Storage: Postgres by default (DATABASE_URL or VOICE_AGENT_DATABASE_URL);
+SQLite fallback for local dev only (data/voice_agent.db).
+All tables carry tenant_id for row-level isolation.
 """
 
 from __future__ import annotations
@@ -28,7 +29,6 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
-    or_,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -84,8 +84,15 @@ def _audit_consent(
 _DB_URL = (
     os.environ.get("VOICE_AGENT_DATABASE_URL")
     or os.environ.get("DATABASE_URL")
-    or f"sqlite:///{Path(__file__).resolve().parent.parent / 'data' / 'voice_agent.db'}"
 )
+
+# In production, require Postgres. Fall back to SQLite only for local dev.
+if not _DB_URL:
+    if os.environ.get("APP_ENV") == "production" or os.environ.get("FORCE_POSTGRES", "").lower() == "true":
+        raise RuntimeError(
+            "DATABASE_URL or VOICE_AGENT_DATABASE_URL must be set for Postgres in production"
+        )
+    _DB_URL = f"sqlite:///{Path(__file__).resolve().parent.parent / 'data' / 'voice_agent.db'}"
 
 engine = create_engine(_DB_URL, echo=False, pool_pre_ping=True)
 _Base = declarative_base()
@@ -572,7 +579,7 @@ def erase_call_subject(subject_identifier: str) -> dict:
     Matches by call_sid, from_number, to_number, or callback_phone in
     extracted_fields. Deletes call records, consent records, and recordings.
     """
-    from sqlalchemy import delete, or_
+    from sqlalchemy import or_
 
     calls_erased = 0
     recordings_erased = 0

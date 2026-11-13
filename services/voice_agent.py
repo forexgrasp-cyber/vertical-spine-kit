@@ -7,8 +7,9 @@ Flow per inbound call:
   4. Play pre-recorded consent; gather speech input via <Gather>
   5. On speech result: extract intent + structured fields (LLM executor)
   6. Query tenant KB for top-3 context chunks
-  7. Compose spoken response; record call + consent; meter call cost via
-     shared.billing.BillingService; persist recording
+  7. Compose spoken response via shared.ai_voice + shared.tts (ElevenLabs-first);
+     record call + consent; meter call cost via shared.billing.BillingService;
+     persist recording + transcribe via shared.whisper.CallRecordingService
   8. Emit call events via shared.integrations.emission
   9. PII fields encrypted at rest via shared.security.at_rest
   10. Hang up
@@ -25,14 +26,6 @@ import os
 import warnings
 from datetime import datetime, timezone
 from typing import Any
-
-# Suppress RuntimeWarning about coroutine 'RateLimiter.check_limit' never awaited
-# This is a false positive - we use loop.run_until_complete() to await it
-warnings.filterwarnings(
-    "ignore",
-    message="coroutine 'RateLimiter.check_limit' was never awaited",
-    category=RuntimeWarning,
-)
 
 from fastapi import Request
 from fastapi.responses import Response
@@ -51,14 +44,86 @@ from shared.gdpr.service import GdprService
 from shared.rag.voice_kb import query_kb
 from shared.security.at_rest import AtRestEmailCrypto
 
+# Suppress RuntimeWarning about coroutine 'RateLimiter.check_limit' never awaited
+# This is a false positive - we use loop.run_until_complete() to await it
+warnings.filterwarnings(
+    "ignore",
+    message="coroutine 'RateLimiter.check_limit' was never awaited",
+    category=RuntimeWarning,
+)
+
+# ── Shared: ai_voice + tts + whisper (W1-b) ───────────────────────────────
+_HAS_AI_VOICE = False
+try:  # noqa: SIM105
+    from shared.ai_voice.protocol import TtsPort
+    from shared.ai_voice.tts_adapter import TTSServiceAdapter
+    from shared.tts.tts_service import TTSService
+    from shared.whisper.call_recorder import CallRecordingService
+    from shared.booking.service import BookingService as SharedBookingService
+    from shared.booking.models import BookingCreate
+    _HAS_AI_VOICE = True
+except Exception:  # noqa: BLE001 - shared may be absent in dev
+    _HAS_AI_VOICE = False
+
+# Lazy init for TTS + CallRecording + Booking services
+_tts_service: TTSService | None = None
+_tts_port: TtsPort | None = None
+_call_recorder: CallRecordingService | None = None
+_booking_service: SharedBookingService | None = None
+
+
+def _init_ai_voice_services() -> None:
+    """Initialize shared.ai_voice + tts + whisper + booking services lazily."""
+    global _tts_service, _tts_port, _call_recorder, _booking_service
+    if not _HAS_AI_VOICE:
+        return
+    if _tts_service is None:
+        _tts_service = TTSService(
+            default_provider="elevenlabs",
+            fallback_provider="edge_tts",
+            dry_run=os.environ.get("TTS_DRY_RUN", "false").lower() == "true",
+        )
+        audio_base_url = os.environ.get("AI_VOICE_AUDIO_BASE_URL", "").rstrip("/")
+        _tts_port = TTSServiceAdapter(_tts_service, audio_base_url=audio_base_url)
+    if _call_recorder is None:
+        async def _transcriber(audio_path: str) -> str:
+            from shared.whisper.whisper_caption_service import WhisperCaptionService
+            svc = WhisperCaptionService(model_size="base")
+            result = await svc.generate_captions(audio_path, word_timestamps=False)
+            if result.success:
+                return " ".join(seg.text for seg in result.segments)
+            return ""
+        async def _summarizer(transcript: str, caller_number: str) -> str:
+            try:
+                from services.executors.llm_exec import extract_intent
+                extraction = await extract_intent(transcript)
+                intent = extraction.get("intent", "general")
+                fields = extraction.get("fields", {})
+                service = fields.get("service") or "unknown service"
+                dt = fields.get("datetime") or "unspecified time"
+                return f"Call from {caller_number}: requested {service} at {dt}. Intent: {intent}."
+            except Exception:
+                lines = [ln.strip() for ln in transcript.splitlines() if ln.strip()]
+                preview = " ".join(lines[:3])[:300]
+                return f"Call from {caller_number or 'unknown'}: {len(lines)} utterance(s). {preview}"
+        _call_recorder = CallRecordingService(
+            db_path=os.environ.get("CALL_RECORDINGS_DB", "data/call_recordings.db"),
+            transcriber=_transcriber,
+            summarizer=_summarizer,
+        )
+    if _booking_service is None:
+        _booking_service = SharedBookingService(
+            db_path=os.environ.get("BOOKING_DB", "data/bookings.db"),
+            in_memory=os.environ.get("BOOKING_IN_MEMORY", "false").lower() == "true",
+        )
+
+
 # ── Shared observability (distributed tracing) ──────────────────────────
 _HAS_OBSERVABILITY = False
 try:  # noqa: SIM105
     from shared.observability.tracing import (  # type: ignore
         generate_trace_id,
         generate_span_id,
-        get_current_span,
-        get_trace_parent_header,
         set_current_span,
         SpanContext,
     )
@@ -125,7 +190,6 @@ try:  # noqa: SIM105
     from shared.multitenancy import (  # type: ignore
         TenantRegistry,
         clear_current_tenant,
-        get_current_tenant,
         set_current_tenant,
     )
 
@@ -216,7 +280,6 @@ def _record_analytics_event(
 _HAS_FEATURE_FLAGS = False
 try:  # noqa: SIM105
     from shared.feature_flags import (  # type: ignore
-        EvaluationContext,
         FeatureFlagService,
     )
 
@@ -266,6 +329,9 @@ def _validate_secrets() -> list[str]:
         return result.missing_secrets if result else []
     except Exception:  # noqa: BLE001
         return []
+
+
+_PII = AtRestEmailCrypto(store="voice_agent_calls")
 
 
 def _encrypt_pii_fields(fields: dict[str, Any]) -> dict[str, Any]:
@@ -440,12 +506,23 @@ def _response_twiml(
     base_url: str,
     record_call: bool = True,
 ) -> str:
-    """Step 3: speak the response, optionally record, then hang up."""
+    """Step 3: speak the response via TTS (ElevenLabs-first) or fallback <Say>, optionally record, then hang up."""
     record_verb = (
         '<Record maxLength="300" playBeep="true" trimSilence="true"/>'
         if record_call
         else ""
     )
+    # Use TTS if wired; otherwise raw <Say>
+    if _HAS_AI_VOICE and _tts_port is not None:
+        audio_url = _tts_port.synthesize_url(spoken_text)
+        if audio_url:
+            return f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Play>{audio_url}</Play>
+  {record_verb}
+  <Hangup/>
+</Response>"""
+    # Fallback to TwiML <Say>
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="alice">{spoken_text}</Say>
@@ -663,6 +740,37 @@ def _meter_call(tenant_id: str, call_sid: str, duration_seconds: int | None) -> 
         pass
 
 
+# ── booking write (W1-b.3) ──────────────────────────────────────────────
+
+async def _write_booking(
+    tenant_id: str,
+    caller_number: str,
+    service_type: str,
+    start_time: str,
+    end_time: str,
+) -> dict | None:
+    """Write a real appointment via shared.booking.BookingService."""
+    if not _HAS_AI_VOICE or _booking_service is None:
+        return None
+    try:
+        import uuid as _uuid
+        result = _booking_service.create(
+            BookingCreate(
+                customer_name="Voice caller",
+                customer_phone=caller_number,
+                staff_id=_uuid.uuid4(),  # placeholder; real impl would pick available staff
+                service_type=service_type,
+                start_time=datetime.fromisoformat(start_time),
+                end_time=datetime.fromisoformat(end_time),
+            )
+        )
+        if result.success and result.data:
+            return {"ok": True, "booking_id": str(result.data.id), "start_time": start_time}
+    except Exception:
+        pass
+    return None
+
+
 # ── main webhook handler ───────────────────────────────────────────────
 
 async def handle_voice_webhook(
@@ -677,6 +785,9 @@ async def handle_voice_webhook(
     Form fields (Twilio):
       CallSid, From, To, CallStatus, SpeechResult, Digits, RecordingUrl, RecordingSid
     """
+    # Initialize shared AI voice services
+    _init_ai_voice_services()
+
     # Set tenant context for request scope
     _set_tenant_context(tenant_id)
 
@@ -928,6 +1039,17 @@ async def handle_voice_webhook(
                     recording_sid=recording_sid,
                     media_url=recording_url or "",
                 )
+                # Process recording: transcribe + summarize + feed to voice_kb (W1-b.4)
+                if _HAS_AI_VOICE and _call_recorder is not None and recording_url:
+                    try:
+                        await _call_recorder.process_call_recording(
+                            call_id=call_sid,
+                            audio_url=recording_url,
+                            caller_number=from_number,
+                            tenant_id=tenant_id,
+                        )
+                    except Exception:
+                        pass  # transcription failure must not break the call
             # Meter voice-minute cost after call ends
             _meter_call(tenant_id, call_sid, duration_seconds)
             # Emit call.completed event
@@ -971,7 +1093,7 @@ def erase_voice_subject(tenant_id: str, email_or_phone: str) -> dict:
     Uses shared.gdpr.GdprService for the request lifecycle, then
     erases call records + recordings for the subject.
     """
-    gdpr = GdprService()
+    GdprService()
     results: dict[str, Any] = {
         "subject": email_or_phone,
         "calls_erased": 0,
