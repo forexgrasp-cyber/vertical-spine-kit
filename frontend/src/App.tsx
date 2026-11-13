@@ -1,7 +1,4 @@
 import AnimBoot from "./components/AnimBoot";
-import StoryPlayer from "./components/StoryPlayer";
-import LandingShowcase from "./components/LandingShowcase";
-import LandingShowcase from "./components/LandingShowcase";
 import LandingShowcase from "./components/LandingShowcase";
 import { useEffect, useState, useCallback } from 'react';
 import { LangSelect, ThemeToggle } from '@shared/widgets';
@@ -129,7 +126,7 @@ export default function App() {
   const hasActiveLicense = licenses.some((l) => !l.revoked);
 
   return (
-    <div className="shell"><AnimBoot /><LandingShowcase /><StoryPlayer />
+    <div className="shell"><AnimBoot /><LandingShowcase />
       <header className="topbar">
         <div className="brand">
           <span className="logo">VSK</span>
