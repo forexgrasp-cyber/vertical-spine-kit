@@ -190,93 +190,90 @@ html{scroll-behavior:smooth}
 *,*::before,*::after{box-sizing:border-box}
 :focus-visible{outline:2px solid currentColor;outline-offset:2px;transition:outline-offset .2s}
 ::selection{background:rgba(99,102,241,.3)}
-:root{--anim-primary:#6366f1;--anim-accent:#a855f7;--anim-glow:rgba(99,102,241,.3);--anim-ease:cubic-bezier(.4,0,.2,1)}
-/* ═══ Minimal Tier ═══ */
-.anim-hover-lift{transition:transform .3s var(--anim-ease),box-shadow .3s ease}
-.anim-hover-lift:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.1)}
-.anim-hover-glow{transition:border-color .3s ease,box-shadow .3s ease}
-.anim-hover-glow:hover{border-color:currentColor;box-shadow:0 0 20px var(--anim-glow)}
-.anim-hover-opacity{transition:opacity .3s ease}
-.anim-hover-opacity:hover{opacity:.8}
-.anim-hover-scale{transition:transform .3s var(--anim-ease)}
-.anim-hover-scale:hover{transform:scale(1.05)}
-.anim-btn-pulse{transition:transform .2s var(--anim-ease),box-shadow .2s ease}
-.anim-btn-pulse:active{transform:scale(.97)}
-.anim-underline{position:relative;text-decoration:none}
-.anim-underline::after{content:'';position:absolute;bottom:-2px;left:50%;width:0;height:2px;background:currentColor;transition:all .3s var(--anim-ease);transform:translateX(-50%)}
-.anim-underline:hover::after{width:100%}
-.anim-border-draw{position:relative}
-.anim-border-draw::before{content:'';position:absolute;top:0;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--anim-primary),var(--anim-accent));transition:width .3s ease}
-.anim-border-draw:hover::before{width:100%}
+:root{box-shadow:0 12px 40px rgba(0,0,0,.1)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ Standard Tier ═══ */
 
 /* ── Scroll-Triggered Reveals ── */
-[data-anim]{opacity:0;transform:translateY(24px);transition:opacity .7s var(--anim-ease),transform .7s var(--anim-ease)}
-[data-anim].anim-visible{opacity:1;transform:translateY(0)}
+[data-anim]{opacity:0;transform:translateY(24px);transition:opacity .7s transparent,transform .7s transparent}
+[data-anim]
 [data-anim=slide-left]{transform:translateX(-30px)}
-[data-anim=slide-left].anim-visible{transform:translateX(0)}
+[data-anim=slide-left]
 [data-anim=slide-right]{transform:translateX(30px)}
-[data-anim=slide-right].anim-visible{transform:translateX(0)}
+[data-anim=slide-right]
 [data-anim=scale-in]{transform:scale(.92)}
-[data-anim=scale-in].anim-visible{transform:scale(1)}
+[data-anim=scale-in]
 [data-anim=stagger]{opacity:1;transform:none}
-.anim-stagger-child{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
-.anim-stagger-child.anim-visible{opacity:1;transform:translateY(0)}
-.anim-delay-1{transition-delay:.1s!important;animation-delay:.1s!important}
-.anim-delay-2{transition-delay:.2s!important;animation-delay:.2s!important}
-.anim-delay-3{transition-delay:.3s!important;animation-delay:.3s!important}
-.anim-delay-4{transition-delay:.4s!important;animation-delay:.4s!important}
-.anim-delay-5{transition-delay:.5s!important;animation-delay:.5s!important}
-.anim-delay-6{transition-delay:.6s!important;animation-delay:.6s!important}
-.anim-delay-7{transition-delay:.7s!important;animation-delay:.7s!important}
-.anim-delay-8{transition-delay:.8s!important;animation-delay:.8s!important}
+
+
+
+
+
+
+
+
+
+
 
 /* ── Text & Typography ── */
-.anim-gradient-text{background:linear-gradient(135deg,var(--anim-primary),var(--anim-accent),#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:textGradient 4s ease infinite}
+
 @keyframes textGradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.anim-gradient-shift{background-size:200% 200%;animation:gradientShift 6s ease infinite}
+
 @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
 /* ── Entrance Keyframes ── */
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeInScale{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-.anim-fade-in{animation:fadeIn .6s ease forwards}
-.anim-fade-in-up{animation:fadeInUp .8s var(--anim-ease) forwards}
-.anim-fade-in-scale{animation:fadeInScale .6s var(--anim-ease) forwards}
+
+
+
 
 /* ── Counter / Stats ── */
 @keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.anim-count-up{animation:countUp .6s ease forwards}
+
 
 /* ── Infinite Ambient ── */
 @keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.anim-gradient-flow{background:linear-gradient(-45deg,#ee7752,#e73c7e,#23a6d5,#23d5ab);background-size:400% 400%;animation:gradientFlow 15s ease infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.anim-float{animation:float 3s ease-in-out infinite}
-@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px var(--anim-glow)}50%{box-shadow:0 0 25px var(--anim-glow)}}
-.anim-pulse-glow{animation:pulseGlow 2s ease-in-out infinite}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.anim-shimmer{background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.06) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 2s ease-in-out infinite}
-@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-.anim-slide-down{animation:slideDown .3s ease forwards}
-@keyframes expandIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.anim-expand-in{transform-origin:left;animation:expandIn .6s var(--anim-ease) forwards}
 
-.anim-noise::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px transparent}50%{box-shadow:0 0 25px transparent}}
+
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+@keyframes expandIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+
+
 @media (prefers-reduced-motion:reduce){
 *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 [data-anim]{opacity:1!important;transform:none!important}
-.anim-stagger-child{opacity:1!important;transform:none!important}
-.anim-noise::after{display:none!important}
-.cursor-dot,.cursor-ring,.anim-particle,.anim-particle-system{display:none!important}
+
+
+.cursor-dot,.cursor-ring,
 .gsap-hero-badge,.gsap-hero-title,.gsap-hero-sub,.gsap-hero-cta,.gsap-stagger-item,.gsap-count,.gsap-reveal{opacity:1!important;transform:none!important}
-.anim-3d-tilt{transform:none!important}
-.anim-glitch{animation:none!important}
-.anim-marquee{animation:none!important}
-.anim-float,.anim-blob,.anim-gradient-flow,.anim-shimmer,.anim-pulse-glow,.anim-typewriter,.anim-wave-text,.anim-text-reveal{animation:none!important}
+
+
+
+
 .scroll-snap-container{scroll-snap-type:none!important}
-.anim-reveal-clip{clip-path:none!important}
+
 }</style>
 </head>
 <body>
@@ -287,7 +284,7 @@ html{scroll-behavior:smooth}
         <nav role="navigation" aria-label="Main navigation">
             <div class="lp-nav">
       <a class="lp-brand" href="/"><span class="lp-brand-dot" aria-hidden="true"></span>Vertical Spine Kit</a>
-      <button class="anim-burger" data-target="#lp-nav-links" aria-label="Toggle navigation menu" aria-expanded="false">&#9776;</button>
+      <button class="" data-target="#lp-nav-links" aria-label="Toggle navigation menu" aria-expanded="false">&#9776;</button>
       <ul class="lp-nav-links" id="lp-nav-links">
         <li><a href="#benefits">Benefits</a></li>
         <li><a href="#features">Features</a></li>
@@ -305,21 +302,21 @@ html{scroll-behavior:smooth}
 
     <main id="main-content" role="main">
         <article>
-            <div class="lp-hero"><div class="lp-hero-inner"><h1>Voice AI for Local Business</h1><p class="lp-sub">Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.</p><div class="lp-hero-cta"><a class="btn btn-primary anim-btn-pulse" href="/register">Start free &mdash; no card required</a><a class="btn btn-hero-secondary" href="/pricing">See pricing</a></div></div></div>
-            <section class="lp-metrics" aria-label="Key results"><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">99.9%</div><div class="lp-metric-label">Uptime SLA</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">&lt;2s</div><div class="lp-metric-label">Avg Response</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">50+</div><div class="lp-metric-label">Languages</div></div><div class="lp-metric anim-hover-lift"><div class="lp-metric-value">\.10</div><div class="lp-metric-label">Per Min</div></div></section>
+            <div class="lp-hero"><div class="lp-hero-inner"><h1>Voice AI for Local Business</h1><p class="lp-sub">Answer every call, book every job, and never miss a lead - powered by AI voice agents that sound human.</p><div class="lp-hero-cta"><a class="btn btn-primary-pulse" href="/register">Start free &mdash; no card required</a><a class="btn btn-hero-secondary" href="/pricing">See pricing</a></div></div></div>
+            <section class="lp-metrics" aria-label="Key results"><div class="lp-metric-lift"><div class="lp-metric-value">99.9%</div><div class="lp-metric-label">Uptime SLA</div></div><div class="lp-metric-lift"><div class="lp-metric-value">&lt;2s</div><div class="lp-metric-label">Avg Response</div></div><div class="lp-metric-lift"><div class="lp-metric-value">50+</div><div class="lp-metric-label">Languages</div></div><div class="lp-metric-lift"><div class="lp-metric-value">\.10</div><div class="lp-metric-label">Per Min</div></div></section>
 <section class="lp-section" id="benefits" aria-labelledby="lp-benefits-h">
   <div class="lp-section-head">
     <h2 id="lp-benefits-h">Why operators switch</h2>
     <p>Time back in your week and money kept in your account &mdash; the two things every saas owner wants more of.</p>
   </div>
-  <div class="lp-grid"><div class="lp-card anim-hover-lift"><h3>24/7 Call Coverage</h3><p>Never miss a call again. Our AI voice agent answers instantly, qualifies leads, and books appointments.</p><div class="lp-chips"><span class="lp-chip">15 hrs/week</span><span class="lp-chip">\,200/mo</span></div></div><div class="lp-card anim-hover-lift"><h3>Per-Tenant Knowledge Base</h3><p>Each business gets its own RAG-powered knowledge base. Ingest services, pricing, FAQs in minutes.</p><div class="lp-chips"><span class="lp-chip">10 hrs/week</span><span class="lp-chip">\,500/mo</span></div></div><div class="lp-card anim-hover-lift"><h3>TCPA/GDPR Compliant</h3><p>Immutable consent audit logs, automatic recording purge, PII encryption at rest. Built for compliance.</p><div class="lp-chips"><span class="lp-chip">5 hrs/week</span><span class="lp-chip">\/mo</span></div></div></div>
+  <div class="lp-grid"><div class="lp-card-lift"><h3>24/7 Call Coverage</h3><p>Never miss a call again. Our AI voice agent answers instantly, qualifies leads, and books appointments.</p><div class="lp-chips"><span class="lp-chip">15 hrs/week</span><span class="lp-chip">\,200/mo</span></div></div><div class="lp-card-lift"><h3>Per-Tenant Knowledge Base</h3><p>Each business gets its own RAG-powered knowledge base. Ingest services, pricing, FAQs in minutes.</p><div class="lp-chips"><span class="lp-chip">10 hrs/week</span><span class="lp-chip">\,500/mo</span></div></div><div class="lp-card-lift"><h3>TCPA/GDPR Compliant</h3><p>Immutable consent audit logs, automatic recording purge, PII encryption at rest. Built for compliance.</p><div class="lp-chips"><span class="lp-chip">5 hrs/week</span><span class="lp-chip">\/mo</span></div></div></div>
 </section>
 <section class="lp-section" id="features" aria-labelledby="lp-features-h">
   <div class="lp-section-head">
     <h2 id="lp-features-h">Everything you need to run the business</h2>
     <p>Built for how saas businesses actually work.</p>
   </div>
-  <div class="lp-grid"><div class="lp-card anim-hover-lift"><h3>Voice Webhook</h3><p>Twilio-native webhook handling with consent flow, speech gathering, and TwiML responses</p></div><div class="lp-card anim-hover-lift"><h3>Intent Extraction</h3><p>LLM + keyword fallback extracts service, datetime, address, callback from speech</p></div><div class="lp-card anim-hover-lift"><h3>Per-Tenant RAG</h3><p>Chroma + sentence-transformers for instant, accurate answers from your content</p></div><div class="lp-card anim-hover-lift"><h3>Entitlement Gating</h3><p>Tier gate (Starter+) + EntitlementsService grants from Stripe webhooks</p></div><div class="lp-card anim-hover-lift"><h3>Voice-Minute Metering</h3><p>Per-call billing via shared.billing.BillingService with usage API</p></div><div class="lp-card anim-hover-lift"><h3>Immutable Consent</h3><p>Hash-chained audit log via shared.audit.ImmutableAuditLog for TCPA/GDPR</p></div><div class="lp-card anim-hover-lift"><h3>Multi-Provider Billing</h3><p>Stripe, Lemon Squeezy, Paddle via shared.billing.UnifiedPaymentService</p></div><div class="lp-card anim-hover-lift"><h3>Dark/Light Theme</h3><p>CSS variables + localStorage persistence, respects prefers-color-scheme</p></div></div>
+  <div class="lp-grid"><div class="lp-card-lift"><h3>Voice Webhook</h3><p>Twilio-native webhook handling with consent flow, speech gathering, and TwiML responses</p></div><div class="lp-card-lift"><h3>Intent Extraction</h3><p>LLM + keyword fallback extracts service, datetime, address, callback from speech</p></div><div class="lp-card-lift"><h3>Per-Tenant RAG</h3><p>Chroma + sentence-transformers for instant, accurate answers from your content</p></div><div class="lp-card-lift"><h3>Entitlement Gating</h3><p>Tier gate (Starter+) + EntitlementsService grants from Stripe webhooks</p></div><div class="lp-card-lift"><h3>Voice-Minute Metering</h3><p>Per-call billing via shared.billing.BillingService with usage API</p></div><div class="lp-card-lift"><h3>Immutable Consent</h3><p>Hash-chained audit log via shared.audit.ImmutableAuditLog for TCPA/GDPR</p></div><div class="lp-card-lift"><h3>Multi-Provider Billing</h3><p>Stripe, Lemon Squeezy, Paddle via shared.billing.UnifiedPaymentService</p></div><div class="lp-card-lift"><h3>Dark/Light Theme</h3><p>CSS variables + localStorage persistence, respects prefers-color-scheme</p></div></div>
 </section>
 <section class="lp-section lp-faq" id="faq" aria-labelledby="lp-faq-h">
   <div class="lp-section-head">
@@ -330,7 +327,7 @@ html{scroll-behavior:smooth}
 <section class="lp-final-cta" aria-labelledby="lp-cta-h">
   <h2 id="lp-cta-h">Run your saas on Vertical Spine Kit</h2>
   <p>Join owners who replaced scattered tools with one platform.</p>
-  <a class="btn btn-primary anim-btn-pulse" href="/register">Create your account</a>
+  <a class="btn btn-primary-pulse" href="/register">Create your account</a>
 </section>
         </article>
     </main>
@@ -357,15 +354,7 @@ var REDUCE = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 // ── Scroll Progress Bar ──
 (function(){
-var pb = document.querySelector('.anim-scroll-progress');
-if(pb && !REDUCE) {
-  var ticking = false;
-  window.addEventListener('scroll',function(){
-    if(!ticking) { requestAnimationFrame(function(){
-      var h = document.documentElement.scrollHeight - window.innerHeight;
-      pb.style.transform = 'scaleX(' + Math.min(window.scrollY / Math.max(h,1), 1) + ')';
-      ticking = false;
-    }); ticking = true; }
+var pb = document.querySelector('); ticking = true; }
   },{passive:true});
 }
 })();
@@ -408,8 +397,8 @@ document.querySelectorAll('[data-anim]:not([data-anim="stagger"]):not([data-anim
 });
 
 // Stats
-document.querySelectorAll('.anim-stat').forEach(function(el){ obs.observe(el); });
-document.querySelectorAll('.anim-reveal-image').forEach(function(el){ obs.observe(el); });
+document.querySelectorAll(');
+document.querySelectorAll(');
 })();
 
 // ── Counter-Up ──
@@ -429,7 +418,7 @@ var co = new IntersectionObserver(function(entries){
     co.unobserve(el);
   });
 },{threshold:0.3});
-document.querySelectorAll('.anim-count-up,.anim-stat-value').forEach(function(el){ co.observe(el); });
+document.querySelectorAll(');
 })();
 }());
 </script>
