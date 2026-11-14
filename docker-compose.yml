@@ -15,7 +15,7 @@ services:
     env_file: ${SITE_ENV_FILE:-.env}
     container_name: callagent
     ports:
-      - "127.0.0.1:20123:20123"
+      - "127.0.0.1:8000:8000"
     volumes:
       - app-data:/app/data
     networks:
@@ -38,7 +38,7 @@ services:
       # nothing defines those, a dangling reference disables this router
       # and the tools wildcard (priority 1) answers the host instead.
       - traefik.http.routers.callagent-web.middlewares=gate-callagent,ratelimit-callagent
-      - traefik.http.services.callagent-app.loadbalancer.server.port=20123
+      - traefik.http.services.callagent-app.loadbalancer.server.port=8000
       - traefik.http.middlewares.gate-callagent.ipallowlist.sourcerange=0.0.0.0/0,::/0
       - traefik.http.middlewares.ratelimit-callagent.ratelimit.average=100
       - traefik.http.middlewares.ratelimit-callagent.ratelimit.burst=50
@@ -50,17 +50,17 @@ services:
       - traefik.http.routers.callagent-web-insecure.service=callagent-app
       - traefik.http.middlewares.redirect-callagent.redirectscheme.scheme=https
     environment:
-      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/callagent"
-      REDIS_URL: "redis://redis:6379/0"
-      SITE_URL: "https://callagent.snapford.com"
-      ENVIRONMENT: "production"
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/callagent
+      - REDIS_URL=redis://redis:6379/0
+      - SITE_URL=https://callagent.snapford.com
+      - ENVIRONMENT=production
     healthcheck:
       # Host header = the public host (TRUSTED_HOSTS rejects a bare
       # 127.0.0.1 Host with 400) and X-Forwarded-Proto: https (the production
       # HTTPSRedirectMiddleware 307s plain http - the probe must look like
       # edge traffic or the container never becomes healthy, and Traefik v3
       # skips unhealthy/starting containers, hiding the router entirely).
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:20123/health', headers={'Host': '${TRAEFIK_HOST:-callagent.snapford.com}', 'X-Forwarded-Proto': 'https'}), timeout=5)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/health', headers={'Host': '${TRAEFIK_HOST:-callagent.snapford.com}', 'X-Forwarded-Proto': 'https'}), timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3

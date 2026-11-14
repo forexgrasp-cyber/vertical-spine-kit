@@ -1,1 +1,0 @@
-.topic-motif{animation:motifPulse 1.4s ease-in-out infinite}@keyframes motifPulse{0%,100%{transform:scale(1);filter:none}50%{transform:scale(1.15);filter:drop-shadow(0 0 10px currentColor)}}

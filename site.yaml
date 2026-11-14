@@ -1,6 +1,6 @@
 ﻿slug: callagent
 host: callagent.snapford.com
-port: 20123
+port: 8000
 class: product
 image: callagent:latest
 service_name: app
