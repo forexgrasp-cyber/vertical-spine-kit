@@ -1,5 +1,3 @@
-import AnimBoot from "./components/AnimBoot";
-import StoryPlayer from "./components/StoryPlayer";
 import { useEffect, useState, useCallback } from 'react';
 import { LangSelect, ThemeToggle } from '@shared/widgets';
 import { loadTranslations, t } from './i18n';
@@ -126,7 +124,7 @@ export default function App() {
   const hasActiveLicense = licenses.some((l) => !l.revoked);
 
   return (
-    <div className="shell"><AnimBoot /><StoryPlayer />
+    <div className="shell">
       <header className="topbar">
         <div className="brand">
           <span className="logo">VSK</span>
