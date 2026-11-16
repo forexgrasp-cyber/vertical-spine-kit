@@ -164,6 +164,10 @@ try:
 except ImportError:
     pass
 
+# Universal Agent (callagent) - exposed as app.state.agent for voice_agent.py
+from services.agent import get_agent
+app.state.agent = get_agent()
+
 # Observability: Sentry, OpenTelemetry, structured logging
 try:
     from shared.observability import setup_observability

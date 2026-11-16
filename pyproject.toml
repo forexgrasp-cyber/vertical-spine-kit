@@ -3,6 +3,13 @@ name = "callagent"
 version = "1.0.0"
 description = "CallAgent - Voice AI for Local Businesses"
 requires-python = ">=3.12"
+dependencies = [
+    "shared-canonical-services==2026.10.0",
+]
+
+# Install from local dist in dev: pip install ../shared-canonical-services/dist/shared_canonical_services-2026.10.0-py3-none-any.whl
+# [tool.uv.sources]
+# shared-canonical-services = { path = "../shared-canonical-services", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

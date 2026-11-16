@@ -50,6 +50,42 @@ from services.calls_db import (
 from shared.gdpr.service import GdprService
 from shared.rag.voice_kb import query_kb
 from shared.security.at_rest import AtRestEmailCrypto
+from shared.agent_runtime.universal import LocalAgentResult
+
+
+# ── Universal Agent integration ───────────────────────────────────────────
+
+async def _generate_agent_response(
+    request: Request,
+    transcript: str,
+    context_chunks: list[dict],
+    tenant_id: str,
+) -> str | None:
+    """Call the universal agent for LLM+KB+receptionist answer.
+
+    Returns the response text, or None if agent unavailable / error (fallback to template).
+    """
+    try:
+        agent = getattr(request.app.state, "agent", None)
+        if agent is None:
+            return None
+
+        # Build context-aware prompt with KB chunks
+        context = "\n".join(c.get("content", "") for c in context_chunks)[:2000]
+        prompt = f"""You are a professional receptionist for a local business.
+The caller said: "{transcript}"
+
+Relevant knowledge base context:
+{context}
+
+Answer concisely and helpfully as a receptionist would on a phone call.
+If booking an appointment, ask for preferred date/time and confirm details.
+If asked about pricing, provide the information from context.
+If you don't know, offer to take a message or transfer."""
+        result: LocalAgentResult = await agent.chat(prompt, session_id=f"call-{tenant_id}-{request.query_params.get('call_sid', 'unknown')}")
+        return result.response if result.response else None
+    except Exception:  # noqa: BLE001 - agent failure should not break the call
+        return None
 
 # ── Shared observability (distributed tracing) ──────────────────────────
 _HAS_OBSERVABILITY = False
@@ -885,12 +921,15 @@ async def handle_voice_webhook(
                 extracted_fields=encrypted_fields,
             )
 
-        spoken = _build_spoken_response(
-            extraction.get("intent", "general"),
-            extraction.get("fields", {}),
-            context_chunks,
-            tenant_id,
-        )
+        # Use universal agent for LLM+KB+receptionist answer; fallback to template
+        spoken = await _generate_agent_response(request, transcript, context_chunks, tenant_id)
+        if spoken is None:
+            spoken = _build_spoken_response(
+                extraction.get("intent", "general"),
+                extraction.get("fields", {}),
+                context_chunks,
+                tenant_id,
+            )
         _record_analytics_event(
             "voice.intent_extracted",
             tenant_id,
