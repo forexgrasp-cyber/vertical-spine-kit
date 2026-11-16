@@ -51,6 +51,9 @@ from shared.gdpr.service import GdprService
 from shared.rag.voice_kb import query_kb
 from shared.security.at_rest import AtRestEmailCrypto
 
+# PII field crypto (same store as services/calls_db._PII so both sides agree)
+_PII = AtRestEmailCrypto(store="voice_agent_calls")
+
 # ── Shared observability (distributed tracing) ──────────────────────────
 _HAS_OBSERVABILITY = False
 try:  # noqa: SIM105
@@ -92,9 +95,9 @@ def _end_span(span: Any, status: str = "OK") -> None:
 # ── Shared emission (webhook event dispatch) ────────────────────────────
 _HAS_EMISSION = False
 try:  # noqa: SIM105
-    from shared.integrations.emission import WebhookEmissionService  # type: ignore
+    from shared.webhooks.subscription_service import WebhookSubscriptionService  # type: ignore
 
-    _emission_service = WebhookEmissionService()
+    _emission_service = WebhookSubscriptionService()
     _HAS_EMISSION = True
 except Exception:  # noqa: BLE001 - shared may be absent in dev
     _emission_service = None  # type: ignore[assignment]
@@ -124,10 +127,10 @@ _HAS_MULTITENANCY = False
 try:  # noqa: SIM105
     from shared.multitenancy import (  # type: ignore
         TenantRegistry,
-        clear_current_tenant,
         get_current_tenant,
         set_current_tenant,
     )
+    from shared.multitenancy.context import clear_current_tenant  # type: ignore
 
     _tenant_registry = TenantRegistry()
     _HAS_MULTITENANCY = True
@@ -140,13 +143,7 @@ def _set_tenant_context(tenant_id: str, tier: str = "free") -> None:
     """Set tenant context for the current request scope."""
     if _HAS_MULTITENANCY:
         try:
-            set_current_tenant(
-                {
-                    "tenant_id": tenant_id,
-                    "tenant_slug": tenant_id,
-                    "tier": tier,
-                }
-            )
+            set_current_tenant(tenant_id, tenant_id, tier=tier)
         except Exception:  # noqa: BLE001
             pass
 
@@ -166,7 +163,7 @@ def _clear_tenant_context() -> None:
 # isn't on PYTHONPATH (dev). Production mounts it via PYTHONPATH.
 _HAS_BILLING = False
 try:  # noqa: SIM105
-    from shared.billing import BillingService, TierGuard  # type: ignore
+    from shared.billing.billing_service import BillingService, TierGuard  # type: ignore
     from shared.billing.entitlements_service import (  # type: ignore
         EntitlementsService,
     )
@@ -372,19 +369,16 @@ def validate_twilio_request(
     params: dict[str, str],
     signature: str,
 ) -> bool:
-    """Validate an incoming Twilio webhook signature (HMAC-SHA1)."""
-    if not TWILIO_AUTH_TOKEN:
-        # Dev mode: allow without signature
-        return True
-    sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
-    message = url + sorted_params
-    digest = hmac.new(
-        TWILIO_AUTH_TOKEN.encode(), message.encode(), hashlib.sha1
-    ).digest()
-    expected = hmac.compare_digest(
-        __import__("base64").b64encode(digest).decode(), signature
+    """Validate an incoming Twilio webhook signature via the canonical helper.
+
+    Dev mode (no TWILIO_AUTH_TOKEN configured) is an explicit opt-in through
+    the shared ``allow_unset_token`` flag; production fails closed.
+    """
+    from shared.telecom.twilio_signature import validate_twilio_signature
+
+    return validate_twilio_signature(
+        TWILIO_AUTH_TOKEN, url, params, signature, allow_unset_token=True
     )
-    return expected
 
 
 # ── TwiML helpers ──────────────────────────────────────────────────────
@@ -459,12 +453,17 @@ def _response_twiml(
 async def _extract_intent_and_fields(
     transcript: str,
 ) -> dict[str, Any]:
-    """Extract intent + structured fields via LLM executor, with local fallback."""
+    """Extract intent + structured fields via the canonical LLM classifier,
+    falling back to the deterministic keyword/entity extractor."""
     try:
-        from services.executors.llm_exec import extract_intent  # type: ignore
+        from shared.ai_voice.intent import classify_intent
 
-        return await extract_intent(transcript)
-    except Exception:  # noqa: BLE001 - document-ai-business may not be on path
+        res = await classify_intent(transcript)
+        out = _fallback_extract(transcript)
+        out["intent"] = res.intent
+        out["confidence"] = res.confidence
+        return out
+    except Exception:  # noqa: BLE001 - shared may be absent in dev
         return _fallback_extract(transcript)
 
 
@@ -891,6 +890,22 @@ async def handle_voice_webhook(
             context_chunks,
             tenant_id,
         )
+
+        # Answer through the universal agent (shared.agent_runtime.universal):
+        # LLM + tenant KB + receptionist prompt. Template above is the
+        # fallback when the agent is in dry-run or errors.
+        try:
+            from services.agent import answer_call_speech, get_agent
+
+            _agent = get_agent(tenant_id=tenant_id)
+            if not _agent.dry_run:
+                _result = await answer_call_speech(
+                    transcript, tenant_id=tenant_id, call_sid=call_sid
+                )
+                if _result.answer and not _result.error:
+                    spoken = _result.answer
+        except Exception:  # noqa: BLE001 - voice flow must never fail on the LLM
+            pass
         _record_analytics_event(
             "voice.intent_extracted",
             tenant_id,

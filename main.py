@@ -80,10 +80,10 @@ except ImportError:
     _HAS_METRICS = False
 
 try:
-    from shared.sso.router import router as sso_router
-    from shared.sso.saml_router import router as saml_router
-    from shared.sso.oidc_client import OIDCClient
-    from shared.sso.org_gateway import OrgGateway
+    from shared.sso.router import build_sso_router
+    from shared.sso.saml_router import build_saml_router
+    from shared.sso.oidc_client import OIDCClient, OIDCProviderConfig
+    from shared.sso import LoginResult, OrgSSOGateway as OrgGateway
     _HAS_SSO = True
 except ImportError:
     _HAS_SSO = False
@@ -91,31 +91,31 @@ except ImportError:
 try:
     from shared.integrations.capability_registry import CapabilityRegistry
     from shared.integrations.schema_introspection_service import SchemaIntrospectionService
-    from shared.integrations.emission import emit_event
+    from shared.integrations.service import create_integrations_router
     _HAS_INTEGRATIONS = True
 except ImportError:
     _HAS_INTEGRATIONS = False
 
 try:
-    from shared.organizations.router import router as org_router
+    from shared.organizations.router import build_org_router
     from shared.organizations.rbac_service import RBACService
-    from shared.organizations.invitations_router import router as invitations_router
+    from shared.organizations.invitations_router import build_invitations_router
     _HAS_ORGANIZATIONS = True
 except ImportError:
     _HAS_ORGANIZATIONS = False
 
 try:
     from shared.white_label.router import router as white_label_router
-    from shared.white_label.branding_service import BrandingService
+    from shared.white_label.branding_service import WhiteLabelService as BrandingService
     _HAS_WHITE_LABEL = True
 except ImportError:
     _HAS_WHITE_LABEL = False
 
 try:
-    from shared.enterprise_security.router import router as enterprise_security_router
-    from shared.enterprise_security.ip_allowlist_router import router as ip_allowlist_router
-    from shared.enterprise_security.break_glass_router import router as break_glass_router
-    from shared.enterprise_security.incident_router import router as incident_router
+    from shared.enterprise_security.ip_allowlist_router import build_ip_allowlist_router
+    from shared.enterprise_security.break_glass_router import build_break_glass_admin_router as build_break_glass_router
+    from shared.enterprise_security.incident_router import build_incident_router
+    from shared.enterprise_security.security_monitor_router import build_security_monitor_router as build_enterprise_security_router
     _HAS_ENTERPRISE_SECURITY = True
 except ImportError:
     _HAS_ENTERPRISE_SECURITY = False
@@ -186,6 +186,42 @@ if booking_router is not None:
 if agent_router is not None:
     app.include_router(agent_router, prefix="/api/v1/agent", tags=["Voice Agent"])
 
+# Canonical vertical-agent surfaces from shared.vertical_app — the same
+# routers every vertical agent app mounts (vertical catalog, pricing, widget
+# embed, Retell/Vapi/Bland missed-call webhooks, Twilio voice/SMS). Additive
+# only: callagent keeps its own /api/v1/bookings and /api/v1/agent routers.
+try:
+    from shared.vertical_app.routers import (
+        build_twilio_router,
+        build_vertical_info_router,
+        build_webhook_routers,
+    )
+    from shared.vertical_app.services import VerticalServices
+
+    _vertical_services = VerticalServices(
+        "contractor",
+        data_dir=os.getenv("CALLAGENT_VERTICAL_DATA_DIR", "./data/vertical_app"),
+        business_name=os.getenv("CALLAGENT_BUSINESS_NAME", "CallAgent"),
+        dry_run=os.getenv("APP_ENV") != "production",
+    )
+    app.include_router(
+        build_vertical_info_router(_vertical_services.spec, current="contractor"),
+        prefix="/api/v1",
+        tags=["Verticals"],
+    )
+    for _webhook_router in build_webhook_routers(_vertical_services, _vertical_services.spec):
+        app.include_router(_webhook_router)
+    app.include_router(build_twilio_router(_vertical_services, _vertical_services.spec))
+
+    # The product's brain: a universal agent (shared.agent_runtime.universal)
+    # with the callagent capability set — same factory as every other agent.
+    from services.agent import get_agent as _get_universal_agent
+
+    app.state.agent = _get_universal_agent()
+except ImportError:
+    # shared.vertical_app not available in this shared version
+    pass
+
 # Tenant-scoped business metrics: users read THEIR OWN KPIs at
 # /api/v1/metrics - the resolver maps the platform session to the caller's
 # tenant (services/tenant_resolver.py; unauthenticated => 401).
@@ -206,29 +242,74 @@ if auth_router is not None:
 
 # Production feature routers (conditional on availability)
 if _HAS_SSO:
-    app.include_router(sso_router, prefix="/api/auth/sso", tags=["Enterprise SSO"])
-    app.include_router(saml_router, prefix="/api/auth/saml", tags=["SAML SSO"])
+    # SSO routers are built only when the IdP env config is present.
+    if os.getenv("SSO_ISSUER_URL") and os.getenv("SSO_CLIENT_ID") and os.getenv("SSO_SECRET_KEY"):
+        try:
+            _public = os.getenv("PUBLIC_BASE_URL", "http://localhost:8163")
+            _cfg = OIDCProviderConfig(
+                issuer=os.environ["SSO_ISSUER_URL"],
+                client_id=os.environ["SSO_CLIENT_ID"],
+                client_secret=os.getenv("SSO_CLIENT_SECRET", ""),
+                redirect_uri=os.getenv("SSO_REDIRECT_URI", f"{_public}/api/auth/sso/callback"),
+            )
+
+            def _on_login(user) -> LoginResult:
+                return LoginResult(user_id=str(getattr(user, "sub", "")), redirect_to="/", org_id=None)
+
+            app.include_router(
+                build_sso_router(client=OIDCClient(_cfg), on_login=_on_login, secret_key=os.environ["SSO_SECRET_KEY"]),
+                prefix="/api/auth/sso",
+                tags=["Enterprise SSO"],
+            )
+        except Exception:
+            pass
+    if os.getenv("SAML_IDP_METADATA_URL") and os.getenv("SAML_SECRET_KEY"):
+        try:
+            app.include_router(build_saml_router(secret_key=os.environ["SAML_SECRET_KEY"]), prefix="/api/auth/saml", tags=["SAML SSO"])
+        except Exception:
+            pass
 
 if _HAS_INTEGRATIONS:
     try:
-        from shared.integrations.router import router as integrations_router
-        app.include_router(integrations_router, prefix="/api/v1/integrations", tags=["Integrations"])
+        from shared.auth import get_current_user
+        app.include_router(
+            create_integrations_router(
+                get_current_user=get_current_user,
+                resolve_api_key_user=lambda key: None,
+                validate_jwt=lambda token: None,
+                api_key_service=lambda: None,
+            ),
+            prefix="/api/v1/integrations",
+            tags=["Integrations"],
+        )
     except ImportError:
         # Integrations router not available in this version
         pass
 
 if _HAS_ORGANIZATIONS:
-    app.include_router(org_router, prefix="/api/v1/organizations", tags=["Organizations"])
-    app.include_router(invitations_router, prefix="/api/v1/organizations", tags=["Organization Invitations"])
+    try:
+        app.include_router(build_org_router(), prefix="/api/v1/organizations", tags=["Organizations"])
+    except Exception:
+        pass
+    try:
+        app.include_router(build_invitations_router(), prefix="/api/v1/organizations", tags=["Organization Invitations"])
+    except Exception:
+        pass
 
 if _HAS_WHITE_LABEL:
     app.include_router(white_label_router, prefix="/api/v1/branding", tags=["White-label"])
 
 if _HAS_ENTERPRISE_SECURITY:
-    app.include_router(enterprise_security_router, prefix="/api/v1/security", tags=["Enterprise Security"])
-    app.include_router(ip_allowlist_router, prefix="/api/v1/security", tags=["IP Allowlist"])
-    app.include_router(break_glass_router, prefix="/api/v1/security", tags=["Break Glass"])
-    app.include_router(incident_router, prefix="/api/v1/security", tags=["Incidents"])
+    for _build, _tag in (
+        (build_enterprise_security_router, "Enterprise Security"),
+        (build_ip_allowlist_router, "IP Allowlist"),
+        (build_break_glass_router, "Break Glass"),
+        (build_incident_router, "Incidents"),
+    ):
+        try:
+            app.include_router(_build(), prefix="/api/v1/security", tags=[_tag])
+        except Exception:
+            pass
 
 # ── Billing: multi-provider checkout + subscriptions ─────────────────
 # Uses UnifiedPaymentService which auto-detects configured providers
